@@ -1,7 +1,7 @@
 
 Program HellyeahSimulator;
 uses SysUtils;
-
+//NO copiar
 Procedure leerCSV(RelativePath: String);
 Var S : String;
     C : Char;
@@ -48,6 +48,10 @@ ArrRegNegocio = Array [1..500] of tRegNegocio;
 
 //Esto da asco también
 procedure cadenAfecha(var Fecha: tFecha; aux: String);
+(* Que hace: Recibe una cadena y devuelve un tipo tfecha
+  Precondiciones: Fecha = F, aux = A Fecha perteneciente al tipo tFecha.
+  Poscondiciones: F
+*)
 var
  i: Integer;
  strNumber: String;
@@ -162,9 +166,30 @@ begin
     end;
 end;
 
+//generar un archivo de registros
+//si el articulo esta de baja no se cuenta
+//si esta vencido no se tiene en cuenta
+//ordenado por clave
+
+procedure arrToDat(Negocios: ArrRegNegocio; FilePath: String);
+var
+  datHandler: file of tRegNegocio;
+  i: integer;
+begin
+  assign(datHandler, FilePath);
+  reset(datHandler);
+  for i:= 0 to Length(Negocios) do
+  begin
+    write(datHandler, Negocios[i]);
+  end;
+  Close(datHandler);
+end;
 
 var
 Negocios: ArrRegNegocio;
 begin
+  //crear arreglo
   CSVaArrRegistro(Negocios,1,'SUCURSAL_CENTRO.CSV');
+  //arrToDat(Negocios, 'INVENTARIO.DAT');
+  
 end.

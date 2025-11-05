@@ -170,26 +170,70 @@ end;
 //si el articulo esta de baja no se cuenta
 //si esta vencido no se tiene en cuenta
 //ordenado por clave
+function articuloBaja(Negocio: tRegNegocio): boolean;
+begin
+  articuloBaja := Negocio.alta;
+end;
+
+function articuloVencido(Negocio: tRegNegocio): boolean;
+var
+  fechaAdq: tFecha;
+  fechaCad: tFecha;
+  vencido: boolean;
+begin
+  fechaAdq := Negocio.fechaAdq;
+  fechaCad := Negocio.fechaCad;
+
+  if (fechaAdq.year > fechaCad.year) then
+    vencido := true
+  else if (fechaAdq.year < fechaCad.year) then
+    vencido := false
+  else if (fechaAdq.month > fechaCad.month) then
+    vencido := true
+  else if (fechaAdq.month < fechaCad.month) then
+    vencido := false
+  else if (fechaAdq.day > fechaCad.day) then
+    vencido := true
+  else
+    vencido := false;
+  articuloVencido := vencido;
+end;
+
+function articuloValido(Negocio: tRegNegocio): boolean;  
+begin
+  if (articuloBaja(Negocio)) or (articuloVencido(Negocio)) then
+    articuloValido := false
+  else;
+    articuloValido := true;
+end;
 
 procedure arrToDat(Negocios: ArrRegNegocio; FilePath: String);
 var
   datHandler: file of tRegNegocio;
   i: integer;
 begin
+  
   assign(datHandler, FilePath);
+  if not FileExists(FilePath) then
+    Rewrite(datHandler);
   reset(datHandler);
   for i:= 0 to Length(Negocios) do
   begin
-    write(datHandler, Negocios[i]);
+    if articuloValido(Negocios[i]) then
+      write(datHandler, Negocios[i]);
   end;
   Close(datHandler);
 end;
 
 var
+Negocio: tRegNegocio;
 Negocios: ArrRegNegocio;
 begin
-  //crear arreglo
-  CSVaArrRegistro(Negocios,1,'SUCURSAL_CENTRO.CSV');
-  //arrToDat(Negocios, 'INVENTARIO.DAT');
+  //Negocio de prueba;
+  //Negocio.Seccion := 'Trusty almacen'; Negocio.Codigo := 10; Negocio.Nombre := 'Pochoclos'; Negocio.Stock := 15; Negocio.Precio := 1500; cadenAfecha(Negocio.FechaAdq, '02/09/2011'); cadenAfecha(Negocio.FechaUv, '01/03/2025'); cadenAfecha(Negocio.FechaCad, '01/09/2011'); Negocio.alta := false; 
   
+  //crear arreglo del csv
+  CSVaArrRegistro(Negocios,1,'SUCURSAL_CENTRO.CSV');
+  //convierte a .dat siguiendo las restricciones de caducidad y de alta
+  arrToDat(Negocios, 'INVENTARIO.DAT');
 end.

@@ -301,6 +301,9 @@ var
 Negocio: tRegNegocio;
 Negocios: ArrRegNegocio;
 begin
+//importante para mostrar un tipo real.
+//FormatFloat('0.0', real)
+
   //Negocio de prueba;
   //Negocio.Seccion := 'Trusty almacen'; Negocio.Codigo := 10; Negocio.Nombre := 'Pochoclos'; Negocio.Stock := 15; Negocio.Precio := 1500; cadenAfecha(Negocio.FechaAdq, '02/09/2011'); cadenAfecha(Negocio.FechaUv, '01/03/2025'); cadenAfecha(Negocio.FechaCad, '01/09/2011'); Negocio.alta := false; 
   

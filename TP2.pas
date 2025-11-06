@@ -12,7 +12,7 @@ tRegNegocio = Record
   Codigo: String;
   Nombre: String;
   Stock: Integer;
-  Precio: Integer;
+  Precio: real;
   FechaAdq: tFecha;
   FechaUv: tFecha;
   FechaCad: tFecha;
@@ -78,13 +78,12 @@ begin
     if (cadReg[i] = ',') or (i = Length(cadReg)) then
       begin
         comas := comas + 1;
-        
         case comas of
           1: Negocio.Seccion := aux;
           2: Negocio.Codigo := aux; 
           3: Negocio.Nombre := aux;
           4: Negocio.Stock := StrToInt(aux);
-          5: Negocio.Precio := StrToInt(aux);
+          5: Negocio.Precio := StrToFloat(aux);
           6: cadenAfecha(Negocio.FechaAdq, aux);
           7: cadenAfecha(Negocio.FechaUv, aux);
           8: cadenAfecha(Negocio.FechaCad, aux);
@@ -327,7 +326,7 @@ begin
   for i:=1 to dim do 
   begin
     Writeln(Negocios[i].seccion);
-    Writeln(Negocios[i].codigo);
+    Writeln(FormatFloat('0.0',Negocios[i].Precio));
   end;
 end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.

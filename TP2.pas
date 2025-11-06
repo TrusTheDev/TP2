@@ -144,9 +144,9 @@ End;
 //Faltan agregar restricciones
 procedure CSVaArrRegistro(var Negocios: ArrRegNegocio; var dim: Integer;RelativePath: String);
 //Convierte un CSV a un arreglo de registros.
-(*  Que hace:
-    precondicones:
-    poscondiciones:
+(*  Que hace: Convierte un CSV dado con registros de tRegNegocio y los mete a un arreglo del mismo tipo.
+    precondicones: Negocios = N, dim = D, RelativePath = R; [1..D] Perteneciente al rango de ArrRegNegocio y el directorio R existe.
+    poscondiciones: Negocios = N' 
 *)
 var
   linesCount, i: Integer;
@@ -166,9 +166,10 @@ end;
 function articuloVencido(Negocio: tRegNegocio): boolean;
 //Verifica si un articulo esta vencido utilizando la fecha de adquisición 
 // y la de caducidad
-(*  Que hace:
-    precondicones:
-    poscondiciones:
+
+(*  Que hace: verifica si un articulo está vencido utilizando la fecha de adquisición y la fecha de caducidad.
+    precondicones: Negocio = N del tipo tRegNegocio.
+    poscondiciones: articuloVencido = V o articuloVencido = F
 *)
 var
   fechaAdq: tFecha;
@@ -195,9 +196,9 @@ end;
 
 function articuloValido(Negocio: tRegNegocio): boolean;  
 //Verifica si un articulo es valido.
-(*  Que hace:
-    precondicones:
-    poscondiciones:
+(*  Que hace: Verifica si un articulo es valido por su booleano de alta y la fecha de vencimiento.
+    precondicones: Negocio = N 
+    poscondiciones: articuloValido = V o articuloValido = F
 *)
 begin
   if (Negocio.alta) or (articuloVencido(Negocio)) then
@@ -206,11 +207,11 @@ begin
     articuloValido := true;
 end;
 
-procedure arrToDat(Negocios: ArrRegNegocio; FilePath: String);
+procedure arrToDat(Negocios: ArrRegNegocio; dim: integer; FilePath: String);
 //convierte un arreglo ordenado de negocios a un .dat dado
-(*  Que hace:
-    precondicones:
-    poscondiciones:
+(*  Que hace: convierte un arreglo dado a un .dat, si el archivo no existe lo crea.
+    precondicones: Negocios = N, FilePath = F, dim = D: [1..D] perteneciente al rango de ArrRegNegocio.
+    poscondiciones: Ninguna.
 *)
 var
   datHandler: file of tRegNegocio;
@@ -221,7 +222,7 @@ begin
   if not FileExists(FilePath) then
     Rewrite(datHandler);
   reset(datHandler);
-  for i:= 0 to Length(Negocios) do
+  for i:= 1 to dim do
   begin
     if articuloValido(Negocios[i]) then
       write(datHandler, Negocios[i]);
@@ -232,9 +233,9 @@ end;
 function comparar(a,b: tRegNegocio):integer;
 begin
 //Ordena por seccion y codigo, parte del quicksort
-(*  Que hace:
-    precondicones:
-    poscondiciones:
+(*  Que hace: compara el negocio a y b segun su seccion y codigo si son iguales.
+    precondicones: a = A, b = B perteneciente al tipo tRegNegocio.
+    poscondiciones: comparar = 0, comparar = 1, comparar = - 1
 *)
     if a.seccion = b.seccion then
         begin
@@ -253,9 +254,9 @@ end;
 
 procedure intercambio(var Negocios: ArrRegNegocio; a, b: integer);
 //intercamba 2 posiciones en un arreglo de negocios dado
-(*  Que hace:
-    precondicones:
-    poscondiciones:
+(*  Que hace: intercambia 2 valores de un arreglo.
+    precondicones: Negocios = N, a = A, b = B, [A] y [B] dentro del rango valido de ArrRegNegocio
+    poscondiciones: Negocios = N'
 *)
 var
     aux: tRegNegocio;
@@ -306,10 +307,9 @@ begin
 end;
 
 Procedure ordenArrSeCod(var Negocios: ArrRegNegocio; dim: integer);
-//ordena el arreglo de negocios dado por Seccion y codigo.
-(*  Que hace:
-    precondicones:
-    poscondiciones:
+(*  Que hace: ordena el arreglo de negocios dado por Seccion y codigo.
+    precondicones: Negocios = N, dim = D; [1..D] perteneciente al rango de ArrRegNegocio.
+    poscondiciones: Negocios = N'
 *)
 begin
   Quicksort(Negocios,1, dim);
@@ -335,7 +335,9 @@ end;
 var
 Negocio: tRegNegocio;
 Negocios: ArrRegNegocio;
-dim: integer;
+dim,opcion: integer;
+
+
 
 begin
     dim := 1;
@@ -346,5 +348,14 @@ begin
     ordenArrSeCod(Negocios,dim);
     listar(Negocios, dim);
     //convierto el arreglo ordenado a .dat
-    arrToDat(Negocios, 'INVENTARIO.DAT');
+    arrToDat(Negocios, dim,'INVENTARIO.DAT');
+
+
+    opcion := -1;
+    write('Inicio de programa: eija una opcion');
+    while opcion <> 0 do
+      begin
+        writeln('1: Dar de alta un articulo en el archivo.',#13#10,'2: Modificar un articulo de alta en el archivo',#13#10,'3: Eliminar un articulo del archivo.',#13#10,'4: Activar un articulo de baja en el archivo.',#13#10, '5: Mostrar un articulo del archivo',#13#10,'6: Listar todos los articulos de una seccion.',#13#10,'Exportar a CSV el archivo INVENTARIO.DAT');
+        ReadLn(opcion);
+      end;
 end.

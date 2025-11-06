@@ -34,7 +34,7 @@ tFecha = Record
 end;
 tRegNegocio = Record
   Seccion: String;
-  Codigo: Integer;
+  Codigo: String;
   Nombre: String;
   Stock: Integer;
   Precio: Integer;
@@ -99,7 +99,7 @@ begin
         
         case comas of
           1: Negocio.Seccion := aux;
-          2: Negocio.Codigo := StrToInt(aux); 
+          2: Negocio.Codigo := aux; 
           3: Negocio.Nombre := aux;
           4: Negocio.Stock := StrToInt(aux);
           5: Negocio.Precio := StrToInt(aux);
@@ -225,6 +225,78 @@ begin
   Close(datHandler);
 end;
 
+function comparar(a,b: tRegNegocio):integer;
+begin
+    if a.seccion = b.seccion then
+        begin
+            if a.codigo = b.codigo then
+                comparar := 0
+            else if a.codigo > b.codigo then
+                comparar := 1
+            else 
+                comparar := -1
+        end
+    else if a.seccion > b.seccion then
+        comparar := 1
+    else
+        comparar := -1
+end;
+
+procedure intercambio(var Negocios: ArrRegNegocio; a, b: integer);
+var
+    aux: tRegNegocio;
+begin
+    aux := Negocios[a];
+    Negocios[a] := Negocios[b];
+    Negocios[b] := aux;
+end;
+
+procedure particion(var Negocios: ArrRegNegocio; principio,final: integer; var pivote: integer);
+var
+    pared,j: integer;
+begin
+    pivote := final;
+    pared := principio - 1;
+    for j := principio to final - 1 do
+    begin
+        if comparar(Negocios[j], Negocios[pivote]) < 0 then
+        begin
+            pared := pared + 1;
+            intercambio(Negocios, pared, j);
+        end;
+    end;
+    pivote := pared + 1;
+    intercambio(Negocios, pivote, final);
+end;
+
+procedure quicksort(var Negocios: ArrRegNegocio; principio,final: integer);
+var
+    posPivote: integer;
+begin
+    if principio < final then
+    begin
+        particion(Negocios, principio, final, posPivote);
+        quicksort(Negocios, principio, posPivote - 1);
+        quicksort(Negocios, posPivote+1, final);
+    end;
+end;
+
+Procedure ordenArrSeCod(var Negocios: ArrRegNegocio; dim: integer);
+begin
+  Quicksort(Negocios,1, dim);
+end;
+
+procedure listar(Negocios: ArrRegNegocio);
+var
+i: integer;
+begin
+  for i:=1 to 30 do 
+  begin
+    Writeln(Negocios[i].seccion);
+    Writeln(Negocios[i].codigo);
+  end;
+end;
+
 var
 Negocio: tRegNegocio;
 Negocios: ArrRegNegocio;
@@ -234,6 +306,11 @@ begin
   
   //crear arreglo del csv
   CSVaArrRegistro(Negocios,1,'SUCURSAL_CENTRO.CSV');
+  //Ordenar arreglo intercambiar valor por dim
+    listar(Negocios);
+    write('ordenado - --------------------------------------------------------');
+    ordenArrSeCod(Negocios,30);
+    listar(Negocios);
   //convierte a .dat siguiendo las restricciones de caducidad y de alta
   arrToDat(Negocios, 'INVENTARIO.DAT');
 end.

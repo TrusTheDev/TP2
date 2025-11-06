@@ -28,9 +28,9 @@ end;
 
 Type
 tFecha = Record
-  day: Integer;
-  month: Integer;
-  year: Integer
+  dia: Integer;
+  mes: Integer;
+  anio: Integer
 end;
 tRegNegocio = Record
   Seccion: String;
@@ -54,26 +54,26 @@ procedure cadenAfecha(var Fecha: tFecha; aux: String);
 *)
 var
  i: Integer;
- strNumber: String;
- slash: Integer;
+ strNumero: String;
+ barra: Integer;
 begin
-  slash := 0;
-  strNumber:= '';
+  barra := 0;
+  strNumero:= '';
   for i := 1 to Length(aux) do
   begin
-    strNumber := aux[i];
-    if strNumber = '/' then 
+    strNumero := aux[i];
+    if strNumero = '/' then 
     begin
-      strNumber := '';
-      slash := slash + 1;
+      strNumero := '';
+      barra := barra + 1;
     end; 
 
-    case slash of
+    case barra of
       //En los valores nulos pascal devuelve 0, es valido esto?
       //Linda ese casting eh
-      0: Fecha.day := StrToInt(IntToStr(Fecha.day) + strNumber);
-      1: Fecha.month := StrToInt(IntToStr(Fecha.month) + strNumber);
-      2: Fecha.year := StrToInt(IntToStr(Fecha.year) + strNumber);
+      0: Fecha.dia := StrToInt(IntToStr(Fecha.dia) + strNumero);
+      1: Fecha.mes := StrToInt(IntToStr(Fecha.mes) + strNumero);
+      2: Fecha.anio := StrToInt(IntToStr(Fecha.anio) + strNumero);
     end;
   end;
 end;
@@ -118,24 +118,24 @@ begin
 end;
 
 
-function getFileLinesCount(FilePath: String): Integer;
+function obtenerLineasArchivo(Archivo: String): Integer;
 var
-  FileText: Text;
+  ArchivoTexto: Text;
   LineCount: Integer;
   tempS: String;
 begin
-  Assign(FileText, FilePath);
-  Reset(FileText);
+  Assign(ArchivoTexto, Archivo);
+  Reset(ArchivoTexto);
   LineCount := 0;
-  while not EoF(FileText) do
+  while not EoF(ArchivoTexto) do
   begin
-    ReadLn(FileText, tempS);
+    ReadLn(ArchivoTexto, tempS);
     LineCount := LineCount + 1;
   end;
-  close(FileText);
-  getFileLinesCount := LineCount;
+  close(ArchivoTexto);
+  obtenerLineasArchivo := LineCount;
 end;
-Procedure getFileLine(var tempVar2: String; index: Integer; RelativePath: String);
+Procedure ObtenerLineArchivo(var tempVar2: String; index: Integer; RelativePath: String);
 Var
   FileLineHandler: Text;
   i: Integer;
@@ -156,10 +156,10 @@ var
   LineRegister: String;
   Negocio: tRegNegocio;
 begin
-  linesCount := getFileLinesCount(RelativePath);
+  linesCount := obtenerLineasArchivo(RelativePath);
   for i:=1 to linesCount do
     begin
-      getFileLine(LineRegister,i,RelativePath);
+      ObtenerLineArchivo(LineRegister,i,RelativePath);
       dim := dim + 1;
       cadenaAregistro(Negocio,LineRegister);
       Negocios[i] := Negocio
@@ -184,15 +184,15 @@ begin
   fechaAdq := Negocio.fechaAdq;
   fechaCad := Negocio.fechaCad;
 
-  if (fechaAdq.year > fechaCad.year) then
+  if (fechaAdq.anio > fechaCad.anio) then
     vencido := true
-  else if (fechaAdq.year < fechaCad.year) then
+  else if (fechaAdq.anio < fechaCad.anio) then
     vencido := false
-  else if (fechaAdq.month > fechaCad.month) then
+  else if (fechaAdq.mes > fechaCad.mes) then
     vencido := true
-  else if (fechaAdq.month < fechaCad.month) then
+  else if (fechaAdq.mes < fechaCad.mes) then
     vencido := false
-  else if (fechaAdq.day > fechaCad.day) then
+  else if (fechaAdq.dia > fechaCad.dia) then
     vencido := true
   else
     vencido := false;
@@ -207,14 +207,14 @@ begin
     articuloValido := true;
 end;
 
-procedure arrToDat(Negocios: ArrRegNegocio; FilePath: String);
+procedure arrAdat(Negocios: ArrRegNegocio; Archivo: String);
 var
   datHandler: file of tRegNegocio;
   i: integer;
 begin
   
-  assign(datHandler, FilePath);
-  if not FileExists(FilePath) then
+  assign(datHandler, Archivo);
+  if not FileExists(Archivo) then
     Rewrite(datHandler);
   reset(datHandler);
   for i:= 0 to Length(Negocios) do
@@ -315,5 +315,5 @@ begin
     ordenArrSeCod(Negocios,30);
     listar(Negocios);
   //convierte a .dat siguiendo las restricciones de caducidad y de alta
-  arrToDat(Negocios, 'INVENTARIO.DAT');
+  arrAdat(Negocios, 'INVENTARIO.DAT');
 end.

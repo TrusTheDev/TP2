@@ -1,3 +1,4 @@
+
 Program BitMarket;
 uses SysUtils;
 
@@ -358,3 +359,101 @@ begin
         ReadLn(opcion);
       end;
 end.
+
+(*
+CSV a .dat exportado
+Procedimiento nombre_procedimiento (E arch:tTexto, S archCSV: tTexto)
+
+Variables
+ 
+Inicio
+    crear(archCSV, "NUEVO_INVENTARIO.CSV")
+    ExportarAscv(arch, archCSV)
+    
+Fin Procedimiento
+
+
+
+
+Procedimiento ExportarAscv (E nombreArc,nombreCSV:cadena)
+
+Variables
+    i:entero
+    archDAT: dathundle
+    reg: record
+    archCSV: tTexto
+    cad:cadena
+Inicio
+    i<--0
+    abrir(archDAT,nombreArc)
+    crear(archCSV,nombreCSV)
+    Mientras no(esFinArchivo(archDAT)) hacer
+        i<--i+1
+        leerln(archDAT,reg)
+        cad<--pasarDatosAcadena(reg)
+        EscribirLN(archCSV,cad)
+    Fin mientras
+    cerrar(archCSV)
+    cerrar(archDAT)
+Fin Procedimiento
+
+
+Funcion pasarDatosAcadena (E reg:TregNegocio):cadena
+/* Qué hace:
+/* Precondiciones: 
+ * Poscondiciones: */ 
+Variables
+    cad: cadena
+Inicio
+    cad<--""
+    cad<-- concatenar(cad,reg.Seccion)
+    cad<--concatenar(cad, ",")
+    cad<--concatenar(cad,reg.codigo)
+    cad<--concatenar(cad, ",")
+    cad<--concatenar(cad,reg.nombre)
+    cad<--concatenar(cad,",")
+    cad<--concatenar(cad,reg,enteroACadena(reg.stock))
+    cad<--concatenar(cad,",")
+    cad<--concatenar(cad,RealACadena(reg.precio))
+    cad<--concatenar(cad,",")
+    cad<-- concatenar(cad,fechaACadena(reg.fechaAdq))
+    cad<--concatenar(cad,",")
+    cad<--concatenar(cad,fechaACadena(reg.FechaUv))
+    cad<--concatenar(cad,",")
+    cad<--concatenar(cad,fechaACaden(reg.FechaCad))
+    cad<--concatenar(cad,",")
+    cad<--concatenar(cad,LogicoACadena(reg.alta))
+    pasarDatosAcadena <- cad
+Fin Funcion
+
+
+funcion fechaACadena(E Reg: tFecha): cadena
+
+Variables
+
+    cad: cadena
+inicio
+    valorMenorADiez(reg.dia,cad)
+    cad<--concatenar(cad,enteroACadena(reg.dia))
+    cad<--concatenar(cad,"/")
+    valorMenorADiez(reg.mes,cad)
+    cad<--concatenar(cad,enteroACadena(reg.mes))
+    cad<--concatenar(cad,"/")
+    valorMenorADiez(reg.anio,cad)
+    cad<--concatenar(cad,reg.anio)    
+    fechaACaden<--cad
+Fin
+
+Funcion LogicoACadena (E log:Logico):cadena
+/* Qué hace:
+/* Precondiciones: 
+ * Poscondiciones: */ 
+Variables
+Inicio
+    Si (log=verdadero) entonces
+        LogicoACadena<--"SI"       
+    sino
+        LogicoACadena<--"NO"
+    fin Si
+Fin Funcion
+*)

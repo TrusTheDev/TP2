@@ -2,6 +2,9 @@
 Program BitMarket;
 uses SysUtils;
 
+const 
+ = 500;
+
 Type
 tFecha = Record
   day: Integer;
@@ -20,7 +23,7 @@ tRegNegocio = Record
   alta: boolean
 end;
 
-ArrRegNegocio = Array [1..500] of tRegNegocio;
+ArrRegNegocio = Array [1..MAX] of tRegNegocio;
 
 procedure cadenAfecha(var Fecha: tFecha; aux: String);
 (* Que hace: Recibe una cadena de fecha en formato DD/MM/YYYY y devuelve un tipo tfecha
@@ -332,37 +335,231 @@ begin
 end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
 
-var
-Negocio: tRegNegocio;
-Negocios: ArrRegNegocio;
-dim,opcion: integer;
+    function confirma (msj:string):boolean;
+    (*
+    QUE HACE?:
+    PRE:
+    POS:
+    *)
+    var
+       respuesta: char;
+    begin
+        repeat
+            writeLn(msj);
+            readLn(respuesta);         
+        until (respuesta in ['s','n','S','N']);
 
+        if respuesta in ['n','N'] then
+        begin
+            confirma := TRUE;
+        end
+        else
+        begin
+            confirma := FALSE;
+        end;
+    end;
+    //***********************************************************************//
+    function nReal (msj : string):Real;
+    Var
+        Cod, n: integer;
+        s: string;
+    Begin
+        Repeat
+            writeln (msj);
+            readln(s);
+            val(s, n, Cod)
+        until Cod = 0;
+        nReal:= n;
+    End;
+    //***********************************************************************// 
+        function entero (msj : string):Integer;
+    Var
+        Cod, n: integer;
+        s: string;
+    Begin
+        Repeat
+            writeln (msj);
+            readln(s);
+            val(s, n, Cod)
+        until Cod = 0;
+        entero:= n;
+    End;
+    //***********************************************************************// 
+    function EnteroEnRango(msj: String; tope1,tope2: integer):integer;
+    (*Qué hace:
+        Solicita al usuario ingresar un valor entre 1 y 5
+    Precondición:
+        msj = MENSAJE ? dato estructurado; tope1 y tope2 ? a los parametros ingresados 
+    Postcondición:
+        Devuelve un valor entero n donde 1 <= n <= 5.
+    *)
+    Var
+        valor: Integer;
+    begin
+        repeat
+            valor := entero(msj);
+            if (valor < tope1) or (valor > tope2) then
+                Write('ERROR: dimension inválida. se espera que el valor ingresado sea entre', tope1,'y', tope2);
+        until (valor in [tope1..tope2]);
+        EnteroEnRango := valor;
+    end;
+        //***********************************************************************//
+    function IngresarNaturalE(msj: String):Integer;
+    var
+        valor:Integer;
+    begin
+        Repeat            
+            valor := entero(msj);
+            if valor < 0 then
+                Write('ERROR: Ingrese un valor natural correcto');
+        until (valor >= 0);
+        IngresarNaturalE := valor; //devuelve un natural real
+    end;
+    //***********************************************************************//
+    function IngresarNaturalR(msj: String):Real;
+    var
+        valor:Real;
+    begin
+        Repeat            
+            valor := nReal(msj);
+            if valor < 0 then
+                Write('ERROR: Ingrese un valor natural correcto');
+        until (valor >= 0);
+        IngresarNaturalR := valor; //devuelve un natural real
 
+    end;
+    //***********************************************************************//
+    function Dia(mes:Integer; bisiesto: boolean):Integer;
+    begin
+        if  bisiesto then
+        begin
+            case mes of
+                1,3,5,7,8,10,12: Dia := EnteroEnRango ('Ingrese un día', 1, 31);
+                4,6,9,11: Dia := EnteroEnRango ('Ingrese un día', 1, 30);
+                2: Dia := EnteroEnRango ('Ingrese un día', 1, 29);
+            end;
+        end
+        else
+        begin
+            case mes of
+                1,3,5,7,8,10,12: Dia := EnteroEnRango ('Ingrese un día', 1, 31);
+                4,6,9,11: Dia := EnteroEnRango ('Ingrese un día', 1, 30);
+                2: Dia := EnteroEnRango ('Ingrese un día', 1, 28);
+            end;
+        end;
+    end;
+    //***********************************************************************//
+    function DiasValido(a:Integer ; m:Integer ):integer;
+    begin
+        if (a mod 4 = 0) or ((a mod 100 = 0) and (a mod 400 = 0)) then
+            DiasValido := Dia(m, True) //biciesto
+        else
+            DiasValido := Dia(m, false);//no biciesto
+    end;    
+    //***********************************************************************//
+    procedure IngresarFecha(msj: String; Var fecha: tFecha);
+    (* Qué hace: Valida e ingresa una fecha
+    Prec: msg=M
+    Posc:fecha = F, F es fecha válida
+    *)    
+    begin
+        writeln(msj);
+        fecha.year := EnteroEnRango('Ingrese un año: ', 1900, 2300);
+        fecha.month := EnteroEnRango('Ingrese un mes: ', 1, 12);
+        fecha.day := DiasValido(fecha.year, fecha.month);  //esta función, en base al año y al mes valida que sea una cantidad de días válido
+    end;
+    //***********************************************************************// 
+    procedure IngresarDatos(var NuevoArt:tRegNegocio);
+    begin
+        writeln('-------Intgrese los siguientes datos:');
+        write(' 1. seccion del producto');
+        readln(NuevoArt.Seccion);
+        write(' 2. codigo del producto');
+        readln(NuevoArt.Codigo);
+        write(' 3. nombre del producto');
+        readln(NuevoArt.Nombre);
 
-begin
-    dim := 1;
-    //levanto el csv a un arreglo de registros.
-    CSVaArrRegistro(Negocios,dim,'SUCURSAL_CENTRO.CSV');
-    listar(Negocios, dim);
-    //ordeno el arreglo por seccion y codigo.
-    ordenArrSeCod(Negocios,dim);
-    listar(Negocios, dim);
-    //convierto el arreglo ordenado a .dat
-    arrToDat(Negocios, dim,'INVENTARIO.DAT');
+        NuevoArt.Stock := IngresarNaturalE(' 4. stock actual del producto');
+        NuevoArt.Precio := IngresarNaturalR(' 5. precio del producto');
 
+        IngresarFecha(' 6. Fecha de adquisición', NuevoArt.FechaAdq);
+        IngresarFecha(' 7.  Fecha de última venta', NuevoArt.FechaUv);
+        IngresarFecha(' 8. Fecha de caducidad', NuevoArt.FechaCad);
+        NuevoArt.alta := confirma('Dar el producto de alta? S/N');
+        
+    end;
 
-    opcion := -1;
-    write('Inicio de programa: eija una opcion');
-    while opcion <> 0 do
-      begin
-        writeln('1: Dar de alta un articulo en el archivo.',#13#10,'2: Modificar un articulo de alta en el archivo',#13#10,'3: Eliminar un articulo del archivo.',#13#10,'4: Activar un articulo de baja en el archivo.',#13#10, '5: Mostrar un articulo del archivo',#13#10,'6: Listar todos los articulos de una seccion.',#13#10,'Exportar a CSV el archivo INVENTARIO.DAT');
-        ReadLn(opcion);
-      end;
-end.
+    //***********************************************************************//
+    function BuscarCodigo(List: ArrRegNegocio; Ini:Integer; fin: Integer; E:String):integer;
+    Var
+        p,f,punt,pos: Integer;
+    begin
+        pos := -1;
+        p := Ini;
+        f := fin;
+        
+        While (pos = -1) and (p <= f) DO
+        Begin
+            punt := (p + f) div 2;
+
+            if (list[punt].Codigo = E) then
+                pos :=  punt
+            else
+            begin
+                if (list[punt].Codigo > E) then
+                    f := punt-1
+                else
+                    p := punt+1;
+            end;
+        end;
+        BuscarCodigo := pos;
+        
+    end;
+    //***********************************************************************//  
+    procedure DarAltaArticulo(var Negocio:ArrRegNegocio; var dim:Integer; max:Integer);
+    var
+        pos: Integer;
+        NuevoArt: tRegNegocio;
+    begin
+        if dim <= max then
+        begin
+            write('Ingrese el codigo del producto');
+            readln(NuevoArt.Codigo);
+
+            pos := BuscarCodigo(negocio, 1, dim, NuevoArt.Codigo);
+
+            if pos = -1 then //si es un articulo nuevo
+                IngresarDatos(NuevoArt)
+                //InsertarOrdenado (Negocio, dim, NuevoArt);
+            else
+                writeln('ERROR: este produccto ya existe');
+        end
+        else
+            begin
+               writeln('ATENCION!!: Limite de almacenamiento alcanzado');
+            end;
+    end;
+    
+    //***********************************************************************//       
+    function Menu(msj: String):integer;
+    begin
+        Writeln(msj);
+        Writeln('Menu:');
+        Writeln('   1. Dar de alta un artículo');
+        Writeln('   2. Modificar un artículo de alta');
+        Writeln('   3. Eliminar un artículo ');
+        Writeln('   4. Activar un artículo de baja');  
+        Writeln('   5. Mostrar un artículo');
+        Writeln('   6. Listar todos los artículos de una sección');
+        Writeln('   7. Exportar a CSV');
+        Menu := EnteroEnRango('ingrece alguna opcion:', 1, 7);         
+    end;
+
 
 (*
-CSV a .dat exportado
-Procedimiento nombre_procedimiento (E arch:tTexto, S archCSV: tTexto)
+  CSV a .dat
+
+  Procedimiento nombre_procedimiento (E arch:tTexto, S archCSV: tTexto)
 
 Variables
  
@@ -371,9 +568,6 @@ Inicio
     ExportarAscv(arch, archCSV)
     
 Fin Procedimiento
-
-
-
 
 Procedimiento ExportarAscv (E nombreArc,nombreCSV:cadena)
 
@@ -412,7 +606,7 @@ Inicio
     cad<--concatenar(cad, ",")
     cad<--concatenar(cad,reg.nombre)
     cad<--concatenar(cad,",")
-    cad<--concatenar(cad,reg,enteroACadena(reg.stock))
+    cad<--concatenar(cad,enteroACadena(reg.stock))
     cad<--concatenar(cad,",")
     cad<--concatenar(cad,RealACadena(reg.precio))
     cad<--concatenar(cad,",")
@@ -420,7 +614,7 @@ Inicio
     cad<--concatenar(cad,",")
     cad<--concatenar(cad,fechaACadena(reg.FechaUv))
     cad<--concatenar(cad,",")
-    cad<--concatenar(cad,fechaACaden(reg.FechaCad))
+    cad<--concatenar(cad,fechaACadena(reg.FechaCad))
     cad<--concatenar(cad,",")
     cad<--concatenar(cad,LogicoACadena(reg.alta))
     pasarDatosAcadena <- cad
@@ -440,8 +634,8 @@ inicio
     cad<--concatenar(cad,enteroACadena(reg.mes))
     cad<--concatenar(cad,"/")
     valorMenorADiez(reg.anio,cad)
-    cad<--concatenar(cad,reg.anio)    
-    fechaACaden<--cad
+    cad<--concatenar(cad,enteroACadena(reg.anio))    
+    fechaACadena<--cad
 Fin
 
 Funcion LogicoACadena (E log:Logico):cadena
@@ -457,3 +651,38 @@ Inicio
     fin Si
 Fin Funcion
 *)
+
+//******************************************************************//
+//************************ALG_PRINCIPAL*****************************//
+//******************************************************************//
+
+var
+Negocio: tRegNegocio;
+Negocios: ArrRegNegocio;
+dim,opcion: integer;
+
+begin
+    dim := 1;
+    //levanto el csv a un arreglo de registros.
+    CSVaArrRegistro(Negocios,dim,'SUCURSAL_CENTRO.CSV');
+    listar(Negocios, dim);
+    //ordeno el arreglo por seccion y codigo.
+    ordenArrSeCod(Negocios,dim);
+    listar(Negocios, dim);
+    //convierto el arreglo ordenado a .dat
+    arrToDat(Negocios, dim,'INVENTARIO.DAT');
+
+
+    opcion := -1;
+    opcion := Menu('-------------“Bit Market”-------------');
+    while opcion <> 0 do
+    case opcion of
+        1:DarAltaArticulo(Negocios, dim, max);
+        //2:ModArticuloDeAlta(Negocios);
+        //3:EliminarArticulo(Negocios);
+        //4:ActivarArticuloDeBaja(Negocios);
+        //5:MostrarArticulo(Negocios);
+        //6:Listar(Negocios);
+        //7:Exportar(Negocios);
+    end;
+end.

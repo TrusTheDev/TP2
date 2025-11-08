@@ -3,13 +3,13 @@ Program BitMarket;
 uses SysUtils;
 
 const 
- = 500;
+ MAX = 500;
 
 Type
 tFecha = Record
-  day: Integer;
-  month: Integer;
-  year: Integer
+  dia: Integer;
+  mes: Integer;
+  anio: Integer
 end;
 tRegNegocio = Record
   Seccion: String;
@@ -47,9 +47,9 @@ begin
     end; 
 
     case slash of
-      0: Fecha.day := StrToInt(IntToStr(Fecha.day) + strNumber);
-      1: Fecha.month := StrToInt(IntToStr(Fecha.month) + strNumber);
-      2: Fecha.year := StrToInt(IntToStr(Fecha.year) + strNumber);
+      0: Fecha.dia := StrToInt(IntToStr(Fecha.dia) + strNumber);
+      1: Fecha.mes := StrToInt(IntToStr(Fecha.mes) + strNumber);
+      2: Fecha.anio := StrToInt(IntToStr(Fecha.anio) + strNumber);
     end;
   end;
 end;
@@ -182,15 +182,15 @@ begin
   fechaAdq := Negocio.fechaAdq;
   fechaCad := Negocio.fechaCad;
 
-  if (fechaAdq.year > fechaCad.year) then
+  if (fechaAdq.anio > fechaCad.anio) then
     vencido := true
-  else if (fechaAdq.year < fechaCad.year) then
+  else if (fechaAdq.anio < fechaCad.anio) then
     vencido := false
-  else if (fechaAdq.month > fechaCad.month) then
+  else if (fechaAdq.mes > fechaCad.mes) then
     vencido := true
-  else if (fechaAdq.month < fechaCad.month) then
+  else if (fechaAdq.mes < fechaCad.mes) then
     vencido := false
-  else if (fechaAdq.day > fechaCad.day) then
+  else if (fechaAdq.dia > fechaCad.dia) then
     vencido := true
   else
     vencido := false;
@@ -318,6 +318,33 @@ begin
   Quicksort(Negocios,1, dim);
 end;
 
+Function valorMenorADiez(a: integer): string;
+begin
+    if a < 10 then
+        valorMenorADiez := '0' + IntToStr(a)
+    else
+    valorMenorADiez := IntToStr(a);
+end;
+
+Function FechAcadena(Fecha: tFecha): String;
+var
+    cad: string;
+begin
+    cad := valorMenorADiez(Fecha.dia);
+    cad := cad + '/';
+    cad := cad + valorMenorADiez(Fecha.mes);
+    cad := cad + '/' + IntToStr(Fecha.anio);
+    FechAcadena := cad;
+end;
+
+Function altaCadena(alta: boolean): string;
+begin
+    if alta then
+    altaCadena := 'SI'
+    else
+    altaCadena := 'NO';
+end;
+
 procedure listar(Negocios: ArrRegNegocio; dim: integer);
 (* que hace: itera y muestra la seccion y codigo de un arreglo de negocios dado.
     solamente para testear.
@@ -329,8 +356,15 @@ i: integer;
 begin
   for i:=1 to dim do 
   begin
-    Writeln(Negocios[i].seccion);
-    Writeln(FormatFloat('0.0',Negocios[i].Precio));
+    Write(Negocios[i].Codigo + ', ');
+    Write(Negocios[i].Nombre+ ', ');
+    Write(IntToStr(Negocios[i].stock)+ ', ');
+    Write(FloatToStr(Negocios[i].Precio)+ ', ');
+    Write(FechAcadena(Negocios[i].FechaAdq)+ ', ');
+    Write(FechAcadena(Negocios[i].FechaUv)+ ', ');
+    Write(FechAcadena(Negocios[i].FechaCad)+ ', ');
+    Write(altaCadena(Negocios[i].alta)+ ', ');
+
   end;
 end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
@@ -464,9 +498,9 @@ end;
     *)    
     begin
         writeln(msj);
-        fecha.year := EnteroEnRango('Ingrese un año: ', 1900, 2300);
-        fecha.month := EnteroEnRango('Ingrese un mes: ', 1, 12);
-        fecha.day := DiasValido(fecha.year, fecha.month);  //esta función, en base al año y al mes valida que sea una cantidad de días válido
+        fecha.anio := EnteroEnRango('Ingrese un año: ', 1900, 2300);
+        fecha.mes := EnteroEnRango('Ingrese un mes: ', 1, 12);
+        fecha.dia := DiasValido(fecha.anio, fecha.mes);  //esta función, en base al año y al mes valida que sea una cantidad de días válido
     end;
     //***********************************************************************// 
     procedure IngresarDatos(var NuevoArt:tRegNegocio);
@@ -568,10 +602,10 @@ begin
     dim := 1;
     //levanto el csv a un arreglo de registros.
     CSVaArrRegistro(Negocios,dim,'SUCURSAL_CENTRO.CSV');
-    listar(Negocios, dim);
+    //listar(Negocios, dim);
     //ordeno el arreglo por seccion y codigo.
     ordenArrSeCod(Negocios,dim);
-    listar(Negocios, dim);
+    //listar(Negocios, dim);
     //convierto el arreglo ordenado a .dat
     arrToDat(Negocios, dim,'INVENTARIO.DAT');
 
@@ -585,7 +619,7 @@ begin
         //3:EliminarArticulo(Negocios);
         //4:ActivarArticuloDeBaja(Negocios);
         //5:MostrarArticulo(Negocios);
-        //6:Listar(Negocios);
+        6: listar(Negocios, dim);
         //7:Exportar(Negocios);
     end;
 end.

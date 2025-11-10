@@ -352,27 +352,65 @@ begin
     altaCadena := 'NO';
 end;
 
-procedure listar(Negocios: ArrRegNegocio; dim: integer);
+//Este algoritmo deberia ser eliminado para la entrega.
+procedure MostrarArticulo(Negocio: tRegNegocio);
 (* que hace: itera y muestra la seccion y codigo de un arreglo de negocios dado.
     solamente para testear.
     precondiciones: Negocios = N, dim = D; [1..D] perteneciente al rango de ArrRegNegocio.
     poscondiciones: ninguna.
 *)
-var
-i: integer;
 begin
-  for i:=1 to dim do 
   begin
-    Write(Negocios[i].Codigo + ', ');
-    Write(Negocios[i].Nombre+ ', ');
-    Write(IntToStr(Negocios[i].stock)+ ', ');
-    Write(FloatToStr(Negocios[i].Precio)+ ', ');
-    Write(FechAcadena(Negocios[i].FechaAdq)+ ', ');
-    Write(FechAcadena(Negocios[i].FechaUv)+ ', ');
-    Write(FechAcadena(Negocios[i].FechaCad)+ ', ');
-    Write(altaCadena(Negocios[i].alta)+ ', ');
+    Write(Negocio.Codigo + ', ');
+    Write(Negocio.Nombre+ ', ');
+    Write(IntToStr(Negocio.stock)+ ', ');
+    Write(FloatToStr(Negocio.Precio)+ ', ');
+    Write(FechAcadena(Negocio.FechaAdq)+ ', ');
+    Write(FechAcadena(Negocio.FechaUv)+ ', ');
+    Write(FechAcadena(Negocio.FechaCad)+ ', ');
+    Write(altaCadena(Negocio.alta));
     writeln;
   end;
+end;
+//Pregunta en este caso listar el alta y baja es muy ineficiente leerlo del archivo, en este caso se puede usar un arreglo?
+ 
+procedure listarAlta(FilePath: string);
+var
+FileHandler: File of tRegNegocio;
+Negocio: tRegNegocio;
+begin
+    Assign(FileHandler, FilePath);
+    Reset(FileHandler);
+    writeln('Articulos de alta:');
+      While not Eof(FileHandler) do
+        Begin
+            Read (FileHandler,Negocio);
+            if Negocio.alta then
+                MostrarArticulo(Negocio);
+        end;
+    close(FileHandler);
+end;
+procedure listarBaja(FilePath: string);
+var
+FileHandler: File of tRegNegocio;
+Negocio: tRegNegocio;
+begin
+    Assign(FileHandler, FilePath);
+    Reset(FileHandler);
+    writeln('Articulos de baja:');
+      While not Eof(FileHandler) do
+        Begin
+            Read (FileHandler,Negocio);
+            if Negocio.alta = false then
+                MostrarArticulo(Negocio);
+        end;
+    close(FileHandler);
+end;
+
+Procedure listarDAT(FilePath: String);
+begin
+    listarAlta(FilePath);
+    listarBaja(FilePath);
 end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
 
@@ -628,7 +666,7 @@ begin
             //3:EliminarArticulo(Negocios);
             //4:ActivarArticuloDeBaja(Negocios);
             //5:MostrarArticulo(Negocios);
-            6: listar(Negocios, dim);
+            6: listarDAT('INVENTARIO.DAT');
             //7:Exportar(Negocios);
         end;
     end;

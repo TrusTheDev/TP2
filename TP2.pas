@@ -132,6 +132,31 @@ begin
   close(FileText);
   getFileLinesCount := LineCount;
 end;
+
+
+function getFileLinesArchiveCount(FilePath: String): Integer;
+//Obtiene la cantidad de lineas de un archivo
+(*  Que hace: cuenta la cantidad de lineas de un archivo.
+    precondicones: FilePath = F y el directorio debe existir.
+    poscondiciones: getFileLinesCount = n
+*)
+var
+  FileText: File of tRegNegocio;
+  LineCount: Integer;
+  tempS: tRegNegocio;
+begin
+  Assign(FileText, FilePath);
+  Reset(FileText);
+  LineCount := 0;
+  while not EoF(FileText) do
+  begin
+    Read(FileText, tempS);
+    LineCount := LineCount + 1;
+  end;
+  close(FileText);
+  getFileLinesArchiveCount := LineCount;
+end;
+
 Procedure getFileLine(var tempVar2: String; index: Integer; RelativePath: String);
 //obtiene una linea dada por el bucle for, dios sabe por que esto funciona así.
 (*  Que hace: obtiene una linea dado de un archivo dado
@@ -148,6 +173,24 @@ Begin
   //Esta cosa necesita una explicación: https://stackoverflow.com/questions/64556659/how-to-read-a-specific-line-from-a-text-file-in-pascal
       For i:= 1 To index Do
       ReadLn(FileLineHandler, tempVar2);
+  Close(FileLineHandler);
+End;
+
+//Obtiene un archivo dado por una linea
+Procedure getFileBusiness(var tempVar2: tRegNegocio; index: Integer; RelativePath: String);
+(*  Que hace: obtiene una linea dado de un archivo dado
+    precondicones: tempVar2 = T, index = I, RelativePath = R.
+    poscondiciones: tempVar2 = T'
+*)
+Var
+  FileLineHandler: File of tRegNegocio;
+  i: Integer;
+Begin
+  Assign(FileLineHandler, RelativePath);
+  Reset(FileLineHandler );
+  //Esta cosa necesita una explicación: https://stackoverflow.com/questions/64556659/how-to-read-a-specific-line-from-a-text-file-in-pascal
+      For i:= 1 To index Do
+      Read(FileLineHandler, tempVar2);
   Close(FileLineHandler);
 End;
 
@@ -361,10 +404,11 @@ procedure MostrarArticulo(Negocio: tRegNegocio);
 *)
 begin
   begin
+    write(Negocio.seccion + ', ');
     Write(Negocio.Codigo + ', ');
     Write(Negocio.Nombre+ ', ');
     Write(IntToStr(Negocio.stock)+ ', ');
-    Write(FloatToStr(Negocio.Precio)+ ', ');
+    Write((FormatFloat('0.0', Negocio.Precio)) + ', ');
     Write(FechAcadena(Negocio.FechaAdq)+ ', ');
     Write(FechAcadena(Negocio.FechaUv)+ ', ');
     Write(FechAcadena(Negocio.FechaCad)+ ', ');
@@ -373,7 +417,7 @@ begin
   end;
 end;
 //Pregunta en este caso listar el alta y baja es muy ineficiente leerlo del archivo, en este caso se puede usar un arreglo?
- 
+//Also aca tambien se podria implementar 2 archivos temporales de alta y baja para que el algoritmo no itere al pedo.
 procedure listarAlta(FilePath: string);
 var
 FileHandler: File of tRegNegocio;
@@ -618,7 +662,44 @@ end;
                writeln('ATENCION!!: Limite de almacenamiento alcanzado');
             end;
     end;
-    
+    //Si el algoritmo se ordeno por seccion y codigo, la busqueda tambien puede hacerse por seccion y codigo?
+    //Utilizar de alguna forma entero en rango
+ 
+    //Duplicado
+    Procedure BuscarCodigoArchivo(var Negocio: tRegNegocio; FilePath: String; Ini:Integer; fin: Integer; E:String);
+    Var
+        p,f,punt,pos: Integer;
+    begin
+        pos := -1;
+        p := Ini;
+        f := fin;
+        While (pos = -1) and (p <= f) DO
+        Begin
+            punt := (p + f) div 2;
+            getFileBusiness(Negocio,punt,FilePath);
+            if (Negocio.Codigo = E) then
+                pos :=  punt
+            else
+            begin
+            getFileBusiness(Negocio,punt,FilePath);
+                if (Negocio.Codigo > E) then
+                    f := punt-1
+                else
+                    p := punt+1;
+            end;
+        end;
+    end;
+    // hasta aca, copiar y pegar al anterior
+    procedure MostrarArticulo(Filepath: String);
+    var
+        codigo: String; 
+        Negocio: tRegNegocio;
+    begin
+        write('Ingresar codigo de articulo formato XXXnnn');
+        readln(codigo);
+        BuscarCodigoArchivo(Negocio, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
+        MostrarArticulo(Negocio);
+    end;
     //***********************************************************************//       
     function Menu(msj: String):integer;
     begin
@@ -660,12 +741,13 @@ begin
     while opcion <> 0 do
     begin
         opcion := Menu('-------------“Bit Market”-------------');
+        //El filepath siempre deberia ser una copia del original para el tema de agregar, eliminar, guardar o deshacer cambios, etc.
         case opcion of
             1:DarAltaArticulo(Negocios, dim, max);
             //2:ModArticuloDeAlta(Negocios);
             //3:EliminarArticulo(Negocios);
             //4:ActivarArticuloDeBaja(Negocios);
-            //5:MostrarArticulo(Negocios);
+            5:MostrarArticulo('INVENTARIO.DAT');
             6: listarDAT('INVENTARIO.DAT');
             //7:Exportar(Negocios);
         end;

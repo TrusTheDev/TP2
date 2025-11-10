@@ -33,25 +33,32 @@ procedure cadenAfecha(var Fecha: tFecha; aux: String);
 var
  i: Integer;
  strNumber: String;
+ caracterAux: char;
  slash: Integer;
 begin
   slash := 0;
-  strNumber:= '';
-  for i := 1 to Length(aux) do
-  begin
-    strNumber := aux[i];
-    if strNumber = '/' then 
+  i := 1;  
+    
+    while slash <= 2 do
     begin
-      strNumber := '';
-      slash := slash + 1;
-    end; 
+        caracterAux := 'A';
+        strNumber := '';
+        while (caracterAux <> '/') and (i <= Length(aux)) do
+        begin
+            caracterAux := aux[i];
+            if caracterAux <> '/' then
+                strNumber := concat(strNumber,caracterAux);
 
-    case slash of
-      0: Fecha.dia := StrToInt(IntToStr(Fecha.dia) + strNumber);
-      1: Fecha.mes := StrToInt(IntToStr(Fecha.mes) + strNumber);
-      2: Fecha.anio := StrToInt(IntToStr(Fecha.anio) + strNumber);
+            i := i + 1
+        end;
+
+        case slash of
+          0: Fecha.dia := StrToInt(strNumber);
+          1: Fecha.mes := StrToInt(strNumber);
+          2: Fecha.anio := StrToInt(strNumber);
+        end;
+        slash := slash + 1;  
     end;
-  end;
 end;
     
 function cadenAlogico(aux: String):boolean;
@@ -364,7 +371,7 @@ begin
     Write(FechAcadena(Negocios[i].FechaUv)+ ', ');
     Write(FechAcadena(Negocios[i].FechaCad)+ ', ');
     Write(altaCadena(Negocios[i].alta)+ ', ');
-
+    writeln;
   end;
 end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
@@ -579,6 +586,7 @@ end;
     begin
         Writeln(msj);
         Writeln('Menu:');
+        Writeln('   0. Para salir');
         Writeln('   1. Dar de alta un artículo');
         Writeln('   2. Modificar un artículo de alta');
         Writeln('   3. Eliminar un artículo ');
@@ -586,7 +594,7 @@ end;
         Writeln('   5. Mostrar un artículo');
         Writeln('   6. Listar todos los artículos de una sección');
         Writeln('   7. Exportar a CSV');
-        Menu := EnteroEnRango('ingrece alguna opcion:', 1, 7);         
+        Menu := EnteroEnRango('ingrece alguna opcion:', 0, 7);   
     end;
 
 //******************************************************************//
@@ -599,7 +607,7 @@ Negocios: ArrRegNegocio;
 dim,opcion: integer;
 
 begin
-    dim := 1;
+    dim := 0;
     //levanto el csv a un arreglo de registros.
     CSVaArrRegistro(Negocios,dim,'SUCURSAL_CENTRO.CSV');
     //listar(Negocios, dim);
@@ -611,15 +619,17 @@ begin
 
 
     opcion := -1;
-    opcion := Menu('-------------“Bit Market”-------------');
     while opcion <> 0 do
-    case opcion of
-        1:DarAltaArticulo(Negocios, dim, max);
-        //2:ModArticuloDeAlta(Negocios);
-        //3:EliminarArticulo(Negocios);
-        //4:ActivarArticuloDeBaja(Negocios);
-        //5:MostrarArticulo(Negocios);
-        6: listar(Negocios, dim);
-        //7:Exportar(Negocios);
+    begin
+        opcion := Menu('-------------“Bit Market”-------------');
+        case opcion of
+            1:DarAltaArticulo(Negocios, dim, max);
+            //2:ModArticuloDeAlta(Negocios);
+            //3:EliminarArticulo(Negocios);
+            //4:ActivarArticuloDeBaja(Negocios);
+            //5:MostrarArticulo(Negocios);
+            6: listar(Negocios, dim);
+            //7:Exportar(Negocios);
+        end;
     end;
 end.

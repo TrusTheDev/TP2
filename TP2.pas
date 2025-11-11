@@ -10,6 +10,7 @@ tFecha = Record
   dia: Integer;
   mes: Integer;
   anio: Integer
+
 end;
 tRegNegocio = Record
   Seccion: String;
@@ -22,6 +23,10 @@ tRegNegocio = Record
   FechaCad: tFecha;
   alta: boolean
 end;
+
+tArchNegocio = FIle of tRegNegocio;
+
+
 
 ArrRegNegocio = Array [1..MAX] of tRegNegocio;
 
@@ -141,7 +146,7 @@ function getFileLinesArchiveCount(FilePath: String): Integer;
     poscondiciones: getFileLinesCount = n
 *)
 var
-  FileText: File of tRegNegocio;
+  FileText: tArchNegocio;
   LineCount: Integer;
   tempS: tRegNegocio;
 begin
@@ -225,25 +230,27 @@ function articuloVencido(Negocio: tRegNegocio): boolean;
     poscondiciones: articuloVencido = V o articuloVencido = F
 *)
 var
-  fechaAdq: tFecha;
-  fechaCad: tFecha;
-  vencido: boolean;
+    fecha: tFecha;
+    fechaActual: TDateTime;
+    a, m, d: Word;
+    vencido: boolean;
 begin
-  fechaAdq := Negocio.fechaAdq;
-  fechaCad := Negocio.fechaCad;
+    //Tomo fecha del sistema
+    fechaActual := Date;
 
-  if (fechaAdq.anio > fechaCad.anio) then
-    vencido := true
-  else if (fechaAdq.anio < fechaCad.anio) then
-    vencido := false
-  else if (fechaAdq.mes > fechaCad.mes) then
-    vencido := true
-  else if (fechaAdq.mes < fechaCad.mes) then
-    vencido := false
-  else if (fechaAdq.dia > fechaCad.dia) then
-    vencido := true
-  else
-    vencido := false;
+    // Decodifico la fecha en anio, mes y dia, devuelve 3 valores de tipo WORD
+    DecodeDate(fechaActual, a, m, d);
+
+    //convierto los WORD a integer
+    fecha.anio:= Integer(a);
+    fecha.mes:= Integer(m);
+    fecha.dia:= Integer(d);
+
+    if (fecha.anio > Negocio.fechaCad.anio) AND (fecha.mes > Negocio.fechaCad.mes) AND (fecha.dia > Negocio.fechaCad.dia) then
+        vencido := false
+    else
+        vencido := true;
+
   articuloVencido := vencido;
 end;
 
@@ -254,7 +261,7 @@ function articuloValido(Negocio: tRegNegocio): boolean;
     poscondiciones: articuloValido = V o articuloValido = F
 *)
 begin
-  if (Negocio.alta) or (articuloVencido(Negocio)) then
+  if (Negocio.alta) and (articuloVencido(Negocio)) then
     articuloValido := false
   else;
     articuloValido := true;
@@ -451,6 +458,7 @@ begin
     close(FileHandler);
 end;
 
+//Unificar 
 Procedure listarDAT(FilePath: String);
 begin
     listarAlta(FilePath);
@@ -700,6 +708,30 @@ end;
         BuscarCodigoArchivo(Negocio, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
         MostrarArticulo(Negocio);
     end;
+
+    procedure EliminarArticulo(FilePath: string);
+    var
+        codigo: String; 
+        Negocio: tRegNegocio;
+    begin
+        listarAlta(FilePath);
+        write('Ingresar codigo de articulo formato XXXnnn, para desactivar');
+        readln(codigo);
+        BuscarCodigoArchivo(Negocio, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
+        Negocio.Alta := False;
+    end;
+
+    procedure ActivarArticuloDeBaja(FilePath: string);
+    var
+        codigo: String; 
+        Negocio: tRegNegocio;
+    begin
+        listarBaja(FilePath);
+        write('Ingresar codigo de articulo formato XXXnnn, para activar');
+        readln(codigo);
+        BuscarCodigoArchivo(Negocio, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
+        Negocio.Alta := true;
+    end;
     //***********************************************************************//       
     function Menu(msj: String):integer;
     begin
@@ -724,9 +756,14 @@ var
 Negocio: tRegNegocio;
 Negocios: ArrRegNegocio;
 dim,opcion: integer;
+NegocioArchivo: tArchNegocio;
+
 
 begin
     dim := 0;
+    Assign(NegocioArchivo,'INVENTARIO.DAT')
+    Resset(NegocioArchivo);
+    close();
     //levanto el csv a un arreglo de registros.
     CSVaArrRegistro(Negocios,dim,'SUCURSAL_CENTRO.CSV');
     //listar(Negocios, dim);
@@ -744,12 +781,12 @@ begin
         //El filepath siempre deberia ser una copia del original para el tema de agregar, eliminar, guardar o deshacer cambios, etc.
         case opcion of
             1:DarAltaArticulo(Negocios, dim, max);
-            //2:ModArticuloDeAlta(Negocios);
-            //3:EliminarArticulo(Negocios);
-            //4:ActivarArticuloDeBaja(Negocios);
-            5:MostrarArticulo('INVENTARIO.DAT');
+            //2: ModArticuloDeAlta(Negocios);
+            3: EliminarArticulo('INVENTARIO.DAT',NegocioArchivo);
+            4: ActivarArticuloDeBaja('INVENTARIO.DAT');
+            5: MostrarArticulo('INVENTARIO.DAT');
             6: listarDAT('INVENTARIO.DAT');
-            //7:Exportar(Negocios);
+            //7: Exportar(Negocios);
         end;
     end;
 end.

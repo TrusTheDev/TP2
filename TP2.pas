@@ -24,7 +24,9 @@ tRegNegocio = Record
   alta: boolean
 end;
 
-tArchNegocio = FIle of tRegNegocio;
+ArrSecciones = Array [1..MAX] of string;
+tArchNegocio = File of tRegNegocio;
+tArchText = Text;
 
 
 
@@ -122,7 +124,7 @@ function getFileLinesCount(FilePath: String): Integer;
     poscondiciones: getFileLinesCount = n
 *)
 var
-  FileText: Text;
+  FileText: tArchText;
   LineCount: Integer;
   tempS: String;
 begin
@@ -169,7 +171,7 @@ Procedure getFileLine(var tempVar2: String; index: Integer; RelativePath: String
     poscondiciones: tempVar2 = T'
 *)
 Var
-  FileLineHandler: Text;
+  FileLineHandler: tArchText;
   i: Integer;
 Begin
   Assign(FileLineHandler, RelativePath);
@@ -188,7 +190,7 @@ Procedure getFileBusiness(var tempVar2: tRegNegocio; index: Integer; RelativePat
     poscondiciones: tempVar2 = T'
 *)
 Var
-  FileLineHandler: File of tRegNegocio;
+  FileLineHandler: tArchNegocio;
   i: Integer;
 Begin
   Assign(FileLineHandler, RelativePath);
@@ -200,7 +202,7 @@ Begin
 End;
 
 //Faltan agregar restricciones
-procedure CSVaArrRegistro(var Negocios: ArrRegNegocio; var dim: Integer;RelativePath: String);
+procedure CSVaArrRegistro(var Negocios: ArrRegNegocio;var dim: Integer; RelativePath: String);
 //Convierte un CSV a un arreglo de registros.
 (*  Que hace: Convierte un CSV dado con registros de tRegNegocio y los mete a un arreglo del mismo tipo.
     precondicones: Negocios = N, dim = D, RelativePath = R; [1..D] Perteneciente al rango de ArrRegNegocio y el directorio R existe.
@@ -211,12 +213,14 @@ var
   LineRegister: String;
   Negocio: tRegNegocio;
 begin
+  
   linesCount := getFileLinesCount(RelativePath);
   for i:=1 to linesCount do
     begin
       getFileLine(LineRegister,i,RelativePath);
       dim := dim + 1;
       cadenaAregistro(Negocio,LineRegister);
+
       Negocios[i] := Negocio
     end;
 end;
@@ -247,9 +251,9 @@ begin
     fecha.dia:= Integer(d);
 
     if (fecha.anio > Negocio.fechaCad.anio) AND (fecha.mes > Negocio.fechaCad.mes) AND (fecha.dia > Negocio.fechaCad.dia) then
-        vencido := false
+        vencido := true
     else
-        vencido := true;
+        vencido := false;
 
   articuloVencido := vencido;
 end;
@@ -261,32 +265,45 @@ function articuloValido(Negocio: tRegNegocio): boolean;
     poscondiciones: articuloValido = V o articuloValido = F
 *)
 begin
-  if (Negocio.alta) and (articuloVencido(Negocio)) then
+  if (Negocio.alta = false)  or (articuloVencido(Negocio)) then
     articuloValido := false
-  else;
-    articuloValido := true;
+  else
+    articuloValido := true
 end;
 
-procedure arrToDat(Negocios: ArrRegNegocio; dim: integer; FilePath: String);
+procedure arrToDat(Negocios: ArrRegNegocio; var secciones: ArrSecciones; var secDim: integer; dim: integer; FilePath: String);
 //convierte un arreglo ordenado de negocios a un .dat dado
 (*  Que hace: convierte un arreglo dado a un .dat, si el archivo no existe lo crea.
     precondicones: Negocios = N, FilePath = F, dim = D: [1..D] perteneciente al rango de ArrRegNegocio.
     poscondiciones: Ninguna.
 *)
 var
-  datHandler: file of tRegNegocio;
+  datHandler: tArchNegocio;
+  Negocio: tRegNegocio;
   i: integer;
+  aux: string;
 begin
-  
+  aux := '';
   assign(datHandler, FilePath);
   if not FileExists(FilePath) then
     Rewrite(datHandler);
   reset(datHandler);
   for i:= 1 to dim do
   begin
-    if articuloValido(Negocios[i]) then
-      write(datHandler, Negocios[i]);
+    Negocio := Negocios[i];
+
+    if articuloValido(Negocio) then
+    begin
+    write(datHandler, Negocio);
+    end;
+    if Negocio.seccion <> aux then
+      begin
+        secDim := secDim + 1;
+        aux := Negocio.seccion;
+        secciones[secDim] := aux; 
+      end;
   end;
+  
   Close(datHandler);
 end;
 
@@ -425,9 +442,9 @@ begin
 end;
 //Pregunta en este caso listar el alta y baja es muy ineficiente leerlo del archivo, en este caso se puede usar un arreglo?
 //Also aca tambien se podria implementar 2 archivos temporales de alta y baja para que el algoritmo no itere al pedo.
-procedure listarAlta(FilePath: string);
+procedure listarAltaSeccion(FilePath,seccion: string; bandera: boolean);
 var
-FileHandler: File of tRegNegocio;
+FileHandler: tArchNegocio;
 Negocio: tRegNegocio;
 begin
     Assign(FileHandler, FilePath);
@@ -436,33 +453,31 @@ begin
       While not Eof(FileHandler) do
         Begin
             Read (FileHandler,Negocio);
-            if Negocio.alta then
+            if Negocio.alta = bandera then
+            begin
+                if Negocio.seccion = seccion then
                 MostrarArticulo(Negocio);
-        end;
-    close(FileHandler);
-end;
-procedure listarBaja(FilePath: string);
-var
-FileHandler: File of tRegNegocio;
-Negocio: tRegNegocio;
-begin
-    Assign(FileHandler, FilePath);
-    Reset(FileHandler);
-    writeln('Articulos de baja:');
-      While not Eof(FileHandler) do
-        Begin
-            Read (FileHandler,Negocio);
-            if Negocio.alta = false then
-                MostrarArticulo(Negocio);
+            end;
         end;
     close(FileHandler);
 end;
 
+
 //Unificar 
-Procedure listarDAT(FilePath: String);
+Procedure listarDAT(FilePath: String;secciones: ArrSecciones; secDim: integer);
+var
+    seccion: string;
+    i: integer;
 begin
-    listarAlta(FilePath);
-    listarBaja(FilePath);
+    write('Ingresar una seccion para listar:');
+    for i := 1 to secDim do
+    begin
+        write(secciones[i] + ',');
+    end;
+
+    Readln(seccion);
+    listarAltaSeccion(FilePath,seccion,true);
+    listarAltaSeccion(FilePath,seccion,false);
 end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
 
@@ -709,24 +724,33 @@ end;
         MostrarArticulo(Negocio);
     end;
 
-    procedure EliminarArticulo(FilePath: string);
+    procedure EliminarArticulo(FilePath: string; secciones: ArrSecciones; secDim: integer);
     var
         codigo: String; 
         Negocio: tRegNegocio;
+        i: integer;
     begin
-        listarAlta(FilePath);
+        for i := 1 to secDim do
+        begin
+            listarAltaSeccion(Filepath,secciones[i],true);
+        end;
         write('Ingresar codigo de articulo formato XXXnnn, para desactivar');
         readln(codigo);
         BuscarCodigoArchivo(Negocio, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
         Negocio.Alta := False;
     end;
 
-    procedure ActivarArticuloDeBaja(FilePath: string);
+    procedure ActivarArticuloDeBaja(FilePath: string; secciones: ArrSecciones; secDim: integer);
     var
         codigo: String; 
         Negocio: tRegNegocio;
+        i: integer;
     begin
-        listarBaja(FilePath);
+        for i := 1 to secDim do
+        begin
+            listarAltaSeccion(Filepath,secciones[i],false);
+        end;
+
         write('Ingresar codigo de articulo formato XXXnnn, para activar');
         readln(codigo);
         BuscarCodigoArchivo(Negocio, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
@@ -753,17 +777,16 @@ end;
 //******************************************************************//
 
 var
-Negocio: tRegNegocio;
+//variables de prueba, borrar al final.
+//Negocio: tRegNegocio;
+//NegocioArchivo: tArchNegocio;
 Negocios: ArrRegNegocio;
-dim,opcion: integer;
-NegocioArchivo: tArchNegocio;
-
-
+secDim,dim,opcion: integer;
+secciones: ArrSecciones;
+i: integer;
 begin
+    secDim := 0;
     dim := 0;
-    Assign(NegocioArchivo,'INVENTARIO.DAT')
-    Resset(NegocioArchivo);
-    close();
     //levanto el csv a un arreglo de registros.
     CSVaArrRegistro(Negocios,dim,'SUCURSAL_CENTRO.CSV');
     //listar(Negocios, dim);
@@ -771,8 +794,9 @@ begin
     ordenArrSeCod(Negocios,dim);
     //listar(Negocios, dim);
     //convierto el arreglo ordenado a .dat
-    arrToDat(Negocios, dim,'INVENTARIO.DAT');
+    arrToDat(Negocios,secciones,secDim, dim,'INVENTARIO.DAT');
 
+    
 
     opcion := -1;
     while opcion <> 0 do
@@ -782,10 +806,10 @@ begin
         case opcion of
             1:DarAltaArticulo(Negocios, dim, max);
             //2: ModArticuloDeAlta(Negocios);
-            3: EliminarArticulo('INVENTARIO.DAT',NegocioArchivo);
-            4: ActivarArticuloDeBaja('INVENTARIO.DAT');
+            3: EliminarArticulo('INVENTARIO.DAT',secciones,secDim);
+            4: ActivarArticuloDeBaja('INVENTARIO.DAT',secciones,secDim);
             5: MostrarArticulo('INVENTARIO.DAT');
-            6: listarDAT('INVENTARIO.DAT');
+            6: listarDAT('INVENTARIO.DAT',secciones,secDim);
             //7: Exportar(Negocios);
         end;
     end;

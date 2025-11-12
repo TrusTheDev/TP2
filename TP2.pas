@@ -449,15 +449,15 @@ Negocio: tRegNegocio;
 begin
     Assign(FileHandler, FilePath);
     Reset(FileHandler);
-    writeln('Articulos de alta:');
       While not Eof(FileHandler) do
         Begin
             Read (FileHandler,Negocio);
             if Negocio.alta = bandera then
-            begin
                 if Negocio.seccion = seccion then
-                MostrarArticulo(Negocio);
-            end;
+                MostrarArticulo(Negocio)
+            else
+                if Negocio.seccion = seccion then
+                MostrarArticulo(Negocio)
         end;
     close(FileHandler);
 end;
@@ -476,7 +476,9 @@ begin
     end;
 
     Readln(seccion);
+    writeln('Articulos de alta:');
     listarAltaSeccion(FilePath,seccion,true);
+    writeln('Articulos de baja:');
     listarAltaSeccion(FilePath,seccion,false);
 end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
@@ -794,9 +796,7 @@ begin
     ordenArrSeCod(Negocios,dim);
     //listar(Negocios, dim);
     //convierto el arreglo ordenado a .dat
-    arrToDat(Negocios,secciones,secDim, dim,'INVENTARIO.DAT');
-
-    
+    arrToDat(Negocios,secciones,secDim, dim,'INVENTARIO.DAT');    
 
     opcion := -1;
     while opcion <> 0 do

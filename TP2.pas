@@ -714,6 +714,8 @@ end;
                     p := punt+1;
             end;
         end;
+        //El indice se decrementa debido a una complejidad sobre el indice del arreglo.
+        Indice := Indice - 1;
     end;
     // hasta aca, copiar y pegar al anterior
     procedure MostrarArticulo(Filepath: String);

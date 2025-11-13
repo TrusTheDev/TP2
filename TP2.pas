@@ -482,6 +482,44 @@ begin
     writeln('Articulos de baja:');
     listarAltaSeccion(FilePath,seccion,false);
 end;
+
+Procedure BuscarCodigoArchivo(var Negocio: tRegNegocio; var Indice: integer; FilePath: String; Ini,fin: Integer; E:String);
+    Var
+        p,f,punt,pos: Integer;
+    begin
+        pos := -1;
+        p := Ini;
+        f := fin;
+        While (pos = -1) and (p <= f) DO
+        Begin
+            punt := (p + f) div 2;
+            getFileBusiness(Negocio,Indice,punt,FilePath);
+            if (Negocio.Codigo = E) then
+                pos :=  punt
+            else
+            begin
+            getFileBusiness(Negocio,Indice,punt,FilePath);
+                if (Negocio.Codigo > E) then
+                    f := punt-1
+                else
+                    p := punt+1;
+            end;
+        end;
+        //El indice se decrementa debido a una complejidad sobre el indice del arreglo.
+        Indice := Indice - 1;
+    end;
+    // hasta aca, copiar y pegar al anterior
+    procedure MostrarArticulo(Filepath: String);
+    var
+        codigo: String; 
+        Negocio: tRegNegocio;
+        Indice: integer;
+    begin
+        write('Ingresar codigo de articulo formato XXXnnn');
+        readln(codigo);
+        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
+        MostrarNegocio(Negocio);
+    end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
 
     function confirma (msj:string):boolean;
@@ -638,44 +676,20 @@ end;
         
     end;
 
-    //***********************************************************************//
-    function BuscarCodigo(List: ArrRegNegocio; Ini:Integer; fin: Integer; E:String):integer;
-    Var
-        p,f,punt,pos: Integer;
-    begin
-        pos := -1;
-        p := Ini;
-        f := fin;
-        
-        While (pos = -1) and (p <= f) DO
-        Begin
-            punt := (p + f) div 2;
-
-            if (list[punt].Codigo = E) then
-                pos :=  punt
-            else
-            begin
-                if (list[punt].Codigo > E) then
-                    f := punt-1
-                else
-                    p := punt+1;
-            end;
-        end;
-        BuscarCodigo := pos;
-        
-    end;
     //***********************************************************************//  
-    procedure DarAltaArticulo(var Negocio:ArrRegNegocio; var dim:Integer; max:Integer);
+procedure DarAltaArticulo(ruta :String; var dim:Integer; max:Integer);
     var
         pos: Integer;
         NuevoArt: tRegNegocio;
+        negocio : tRegNegocio;
     begin
         if dim <= max then
         begin
             write('Ingrese el codigo del producto');
             readln(NuevoArt.Codigo);
 
-            pos := BuscarCodigo(negocio, 1, dim, NuevoArt.Codigo);
+            pos := -1;
+            BuscarCodigoArchivo(negocio, pos, ruta, 1, dim, NuevoArt.Codigo);
 
             if pos = -1 then //si es un articulo nuevo
                 IngresarDatos(NuevoArt)
@@ -692,43 +706,7 @@ end;
     //Utilizar de alguna forma entero en rango
  
     //Duplicado
-    Procedure BuscarCodigoArchivo(var Negocio: tRegNegocio; var Indice: integer; FilePath: String; Ini,fin: Integer; E:String);
-    Var
-        p,f,punt,pos: Integer;
-    begin
-        pos := -1;
-        p := Ini;
-        f := fin;
-        While (pos = -1) and (p <= f) DO
-        Begin
-            punt := (p + f) div 2;
-            getFileBusiness(Negocio,Indice,punt,FilePath);
-            if (Negocio.Codigo = E) then
-                pos :=  punt
-            else
-            begin
-            getFileBusiness(Negocio,Indice,punt,FilePath);
-                if (Negocio.Codigo > E) then
-                    f := punt-1
-                else
-                    p := punt+1;
-            end;
-        end;
-        //El indice se decrementa debido a una complejidad sobre el indice del arreglo.
-        Indice := Indice - 1;
-    end;
-    // hasta aca, copiar y pegar al anterior
-    procedure MostrarArticulo(Filepath: String);
-    var
-        codigo: String; 
-        Negocio: tRegNegocio;
-        Indice: integer;
-    begin
-        write('Ingresar codigo de articulo formato XXXnnn');
-        readln(codigo);
-        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
-        MostrarNegocio(Negocio);
-    end;
+    
 
     procedure EliminarArticulo(FilePath: string; secciones: ArrSecciones; secDim: integer);
     var
@@ -780,6 +758,94 @@ end;
         close(FileHandler);
         
     end;
+
+procedure valorMenorADiez(num: integer; var cad: string);
+
+begin
+
+     if num<10 then
+        cad:= (cad + '0')
+end;
+
+
+function concatenarAlta(logico:boolean): string;
+
+begin
+     if (logico)then
+        concatenarAlta:= 'SI'
+     else
+         concatenarAlta:= 'NO';
+end;
+
+
+
+function fechaACadena(reg:tFecha): string;
+
+var
+   cad: string;
+
+begin
+    valorMenorADiez(reg.dia,cad);
+    cad:=(cad + intToStr(reg.dia));
+    cad:=(cad + '/');
+    valorMenorADiez(reg.mes, cad);
+    cad:=(cad + intToStr(reg.mes));
+    cad:=(cad + '/');
+    valorMenorADiez(reg.anio,cad);
+    cad:=(cad + intToStr(reg.anio));
+    fechaACadena:=cad;
+end;
+
+
+function pasarDatosAcadena(reg: tRegNegocio):string;
+
+var
+   cad: string;
+begin
+    cad := '';
+     cad:=(cad + reg.seccion);
+     cad:=(cad + ',');
+     cad:=(cad + reg.codigo);
+     cad:=(cad + ',');
+     cad:=(cad + reg.nombre);
+     cad:= (cad + ',');
+     cad:=(cad + intToStr(reg.stock));
+     cad:=(cad + ',');
+     cad:=(cad + floatToStr(reg.precio));
+     cad:=(cad + ',');
+     cad:=(cad + fechaACadena(reg.fechaAdq));
+     cad:=(cad + ',');
+     cad:=(cad + fechaACadena(reg.FechaUv));
+     cad:=(cad + ',');
+     cad:=(cad + fechaACadena(reg.FechaCad));
+     cad:=(cad + ',');
+     cad:=(cad + concatenarAlta(reg.alta));
+     pasarDatosAcadena:=cad;
+end;
+
+procedure Exportar(nombreDat: string);
+var
+   DAT: tarchNegocio;
+   CSV: text;
+   Reg: tRegNegocio;
+   cad: string;
+begin
+
+    assign(DAT,nombreDat);
+    reset(DAT);
+    assign(CSV,'NUEVO_INVENTARIO.CSV');
+    rewrite(CSV);
+    while not Eof(DAT) do
+    begin
+        read (DAT, reg);
+        cad:=pasarDatosAcadena(reg);
+        Writeln(CSV,cad);
+    end;
+    close(CSV);
+    close(DAT);
+
+end;
+
     //***********************************************************************//       
     function Menu(msj: String):integer;
     begin
@@ -826,13 +892,13 @@ begin
         opcion := Menu('-------------“Bit Market”-------------');
         //El filepath siempre deberia ser una copia del original para el tema de agregar, eliminar, guardar o deshacer cambios, etc.
         case opcion of
-            1:DarAltaArticulo(Negocios, dim, max);
+            1:DarAltaArticulo('INVENTARIO.DAT', dim, max);
             //2: ModArticuloDeAlta(Negocios);
             3: EliminarArticulo('INVENTARIO.DAT',secciones,secDim);
             4: ActivarArticuloDeBaja('INVENTARIO.DAT',secciones,secDim);
             5: MostrarArticulo('INVENTARIO.DAT');
             6: listarDAT('INVENTARIO.DAT',secciones,secDim);
-            //7: Exportar(Negocios);
+            7: Exportar('INVENTARIO.DAT');
         end;
     end;
 end.

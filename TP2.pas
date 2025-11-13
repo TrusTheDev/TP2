@@ -184,9 +184,9 @@ Begin
 End;
 
 //Obtiene un archivo dado por una linea
-Procedure getFileBusiness(var tempVar2: tRegNegocio; index: Integer; RelativePath: String);
+Procedure getFileBusiness(var tempVar2: tRegNegocio; var Indice: integer; linea: Integer; RelativePath: String);
 (*  Que hace: obtiene una linea dado de un archivo dado
-    precondicones: tempVar2 = T, index = I, RelativePath = R.
+    precondicones: tempVar2 = T, linea = L, RelativePath = R.
     poscondiciones: tempVar2 = T'
 *)
 Var
@@ -196,8 +196,9 @@ Begin
   Assign(FileLineHandler, RelativePath);
   Reset(FileLineHandler );
   //Esta cosa necesita una explicación: https://stackoverflow.com/questions/64556659/how-to-read-a-specific-line-from-a-text-file-in-pascal
-      For i:= 1 To index Do
-      Read(FileLineHandler, tempVar2);
+    For i:= 1 To linea Do
+        Read(FileLineHandler, tempVar2);
+  Indice := FilePos(FileLineHandler);
   Close(FileLineHandler);
 End;
 
@@ -420,7 +421,7 @@ begin
 end;
 
 //Este algoritmo deberia ser eliminado para la entrega.
-procedure MostrarArticulo(Negocio: tRegNegocio);
+procedure MostrarNegocio(Negocio: tRegNegocio);
 (* que hace: itera y muestra la seccion y codigo de un arreglo de negocios dado.
     solamente para testear.
     precondiciones: Negocios = N, dim = D; [1..D] perteneciente al rango de ArrRegNegocio.
@@ -454,10 +455,10 @@ begin
             Read (FileHandler,Negocio);
             if Negocio.alta = bandera then
                 if Negocio.seccion = seccion then
-                MostrarArticulo(Negocio)
+                MostrarNegocio(Negocio)
             else
                 if Negocio.seccion = seccion then
-                MostrarArticulo(Negocio)
+                MostrarNegocio(Negocio)
         end;
     close(FileHandler);
 end;
@@ -691,7 +692,7 @@ end;
     //Utilizar de alguna forma entero en rango
  
     //Duplicado
-    Procedure BuscarCodigoArchivo(var Negocio: tRegNegocio; FilePath: String; Ini:Integer; fin: Integer; E:String);
+    Procedure BuscarCodigoArchivo(var Negocio: tRegNegocio; var Indice: integer; FilePath: String; Ini,fin: Integer; E:String);
     Var
         p,f,punt,pos: Integer;
     begin
@@ -701,12 +702,12 @@ end;
         While (pos = -1) and (p <= f) DO
         Begin
             punt := (p + f) div 2;
-            getFileBusiness(Negocio,punt,FilePath);
+            getFileBusiness(Negocio,Indice,punt,FilePath);
             if (Negocio.Codigo = E) then
                 pos :=  punt
             else
             begin
-            getFileBusiness(Negocio,punt,FilePath);
+            getFileBusiness(Negocio,Indice,punt,FilePath);
                 if (Negocio.Codigo > E) then
                     f := punt-1
                 else
@@ -719,34 +720,46 @@ end;
     var
         codigo: String; 
         Negocio: tRegNegocio;
+        Indice: integer;
     begin
         write('Ingresar codigo de articulo formato XXXnnn');
         readln(codigo);
-        BuscarCodigoArchivo(Negocio, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
-        MostrarArticulo(Negocio);
+        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
+        MostrarNegocio(Negocio);
     end;
 
     procedure EliminarArticulo(FilePath: string; secciones: ArrSecciones; secDim: integer);
     var
+        FileHandler: tArchNegocio;
+
         codigo: String; 
         Negocio: tRegNegocio;
-        i: integer;
+        i,Indice: integer;
     begin
         for i := 1 to secDim do
         begin
-            listarAltaSeccion(Filepath,secciones[i],true);
+            listarAltaSeccion(FilePath,secciones[i],true);
         end;
         write('Ingresar codigo de articulo formato XXXnnn, para desactivar');
         readln(codigo);
-        BuscarCodigoArchivo(Negocio, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
+        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,getFileLinesArchiveCount(FilePath),codigo);
         Negocio.Alta := False;
+
+        Assign(FileHandler, FilePath);
+        Reset(FileHandler);
+        Seek(FileHandler, Indice);
+        write(FileHandler,Negocio);
+        close(FileHandler);
+
     end;
 
     procedure ActivarArticuloDeBaja(FilePath: string; secciones: ArrSecciones; secDim: integer);
     var
+        FileHandler: tArchNegocio;
         codigo: String; 
         Negocio: tRegNegocio;
         i: integer;
+        Indice: integer;
     begin
         for i := 1 to secDim do
         begin
@@ -755,8 +768,15 @@ end;
 
         write('Ingresar codigo de articulo formato XXXnnn, para activar');
         readln(codigo);
-        BuscarCodigoArchivo(Negocio, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
+        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
         Negocio.Alta := true;
+
+        Assign(FileHandler, FilePath);
+        Reset(FileHandler);
+        Seek(FileHandler, Indice);
+        write(FileHandler,Negocio);
+        close(FileHandler);
+        
     end;
     //***********************************************************************//       
     function Menu(msj: String):integer;

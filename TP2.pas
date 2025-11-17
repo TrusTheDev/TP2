@@ -201,24 +201,24 @@ procedure CSVaArrRegistro(var Negocios: ArrRegNegocio;var dim: Integer; Relative
 *)
 var
   contadorLineas, i: Integer;
-  LineRegister: String;
+  lineaRegistro: String;
   Negocio: tRegNegocio;
 begin
   
   contadorLineas := contadorLineasArchivo(RelativePath);
   for i:=1 to contadorLineas do
     begin
-      lineArchivo(LineRegister,i,RelativePath);
+      lineArchivo(lineaRegistro,i,RelativePath);
       dim := dim + 1;
-      cadenaAregistro(Negocio,LineRegister);
+      cadenaAregistro(Negocio,lineaRegistro);
 
       Negocios[i] := Negocio
     end;
 end;
 
-function articuloVencido(Negocio: tRegNegocio): boolean;
+function articuloVencido(fechaCad: tFecha): boolean;
 (*  Que hace: verifica si un articulo está vencido utilizando la fecha actual del sistema y la fecha de caducidad.
-    precondicones: Negocio = N del tipo tRegNegocio.
+    precondicones: fechaCAD = F: F es un tFecha 
     poscondiciones: articuloVencido = V o articuloVencido = F
 *)
 var
@@ -238,7 +238,7 @@ begin
     fecha.mes:= Integer(m);
     fecha.dia:= Integer(d);
 
-    if (fecha.anio > Negocio.fechaCad.anio) AND (fecha.mes > Negocio.fechaCad.mes) AND (fecha.dia > Negocio.fechaCad.dia) then
+    if (fecha.anio > fechaCad.anio) AND (fecha.mes > fechaCad.mes) AND (fecha.dia > fechaCad.dia) then
         vencido := true
     else
         vencido := false;
@@ -246,13 +246,13 @@ begin
   articuloVencido := vencido;
 end;
 
-function articuloValido(Negocio: tRegNegocio): boolean;  
+function articuloValido(alta: boolean; fechaCad: tFecha): boolean;  
 (*  Que hace: Verifica si un articulo es valido por su booleano de alta y la fecha de vencimiento.
-    precondicones: Negocio = N 
+    precondicones: alta = N, fechaCAD = F: F es un tFecha 
     poscondiciones: articuloValido = V o articuloValido = F
 *)
 begin
-  if (Negocio.alta = false)  or (articuloVencido(Negocio)) then
+  if (alta = false)  or (articuloVencido(fechaCad)) then
     articuloValido := false
   else
     articuloValido := true
@@ -279,7 +279,7 @@ begin
   begin
     Negocio := Negocios[i];
 
-    if articuloValido(Negocio) then
+    if articuloValido(Negocio.alta, Negocio.fechaCad) then
     begin
     write(datHandler, Negocio);
     end;
@@ -294,23 +294,23 @@ begin
   Close(datHandler);
 end;
 
-function comparar(a,b: tRegNegocio):integer;
+function comparar(aSec,aC: string; bSec,bC: string):integer;
 begin
 //Ordena por seccion y codigo, parte del quicksort
 (*  Que hace: compara el negocio a y b segun su seccion y codigo si son iguales.
-    precondicones: a = A, b = B perteneciente al tipo tRegNegocio.
+    precondicones: aSec = aS,aC = AC, bsec = BS, bC= BC.
     poscondiciones: comparar = 0 si son iguales, comparar = 1 si a es mas grande que b, comparar = -1 b es mas grande que a
 *)
-    if a.seccion = b.seccion then
+    if aSec = bSec then
         begin
-            if a.codigo = b.codigo then
+            if aC = bC then
                 comparar := 0
-            else if a.codigo > b.codigo then
+            else if aC > bC then
                 comparar := 1
             else 
                 comparar := -1
         end
-    else if a.seccion > b.seccion then
+    else if aSec > bSec then
         comparar := 1
     else
         comparar := -1
@@ -337,12 +337,17 @@ procedure particion(var Negocios: ArrRegNegocio; principio,final: integer; var p
 *)
 var
     pared,j: integer;
+    SeccionA,CodigoA,SeccionB,CodigoB: String;
 begin
     pivote := final;
     pared := principio - 1;
     for j := principio to final - 1 do
     begin
-        if comparar(Negocios[j], Negocios[pivote]) < 0 then
+        SeccionA := Negocios[j].Seccion;
+        CodigoA := Negocios[j].codigo;
+        SeccionB := Negocios[pivote].seccion;
+        CodigoB := Negocios[pivote].codigo;
+        if comparar(SeccionA,CodigoA,SeccionB,CodigoB) < 0 then
         begin
             pared := pared + 1;
             intercambio(Negocios, pared, j);

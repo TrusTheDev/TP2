@@ -384,13 +384,18 @@ begin
   Quicksort(Negocios,1, dim);
 end;
 
-Function valorMenorADiez(a: integer): string;
+Function valorMenorADiez(num: integer): string;
+
+// Qué hace: recibe un valor numerico y si el valor numerico es menor a 10 le concatenara un 0 enfrente del numero convertido a cadena o retornara el numero a cadena.
+// Precondiciones: recibira un valor entero el cual debe venir inicializado.
+// Poscondiciones: devolvera la cadena con un 0 o la cadena intacta, tal comoo  esta.
 begin
-    if a < 10 then
-        valorMenorADiez := '0' + IntToStr(a)
+    if num < 10 then
+        valorMenorADiez := '0' + IntToStr(num)
     else
-    valorMenorADiez := IntToStr(a);
+    valorMenorADiez := IntToStr(num);
 end;
+
 
 Function FechAcadena(Fecha: tFecha): String;
 var
@@ -805,16 +810,11 @@ begin
         writeln('El articulo no existe')
 end;
 
-procedure valorMenorADiez(num: integer; var cad: string);
-
-begin
-
-     if num<10 then
-        cad:= (cad + '0')
-end;
-
-
 function concatenarAlta(logico:boolean): string;
+
+// Qué hace: recive valor logico, si este valor es verdadero devolvera un un SI, de lo contrario si el logico es falso devolvera un NO
+// Precondiciones: debe ingresar un valor logico
+// Poscondiciones: devolvera una cadena con SI o con NO
 
 begin
      if (logico)then
@@ -825,25 +825,35 @@ end;
 
 
 
+
 function fechaACadena(reg:tFecha): string;
+
+// Qué hace: recive un registro de tipo tFecha para concatenar las fechas en este formato dia/mes/año y devuelve una cadena
+// Precondiciones: el registro debe venir inicializado, si no podria devolver cualquier tipo de informacion erronea
+// Poscondiciones: al devolver una cadena debe haber algo que lo reciva o la informacion se perdera
+
 
 var
    cad: string;
 
 begin
-    valorMenorADiez(reg.dia,cad);
-    cad:=(cad + intToStr(reg.dia));
-    cad:=(cad + '/');
-    valorMenorADiez(reg.mes, cad);
-    cad:=(cad + intToStr(reg.mes));
-    cad:=(cad + '/');
-    valorMenorADiez(reg.anio,cad);
-    cad:=(cad + intToStr(reg.anio));
+    cad:='';
+    cad:= cad + valorMenorADiez(reg.dia);
+    cad:=cad + '/';
+    cad:= cad +valorMenorADiez(reg.mes);
+    cad:=cad + '/';
+    cad:=cad + intToStr(reg.anio);
     fechaACadena:=cad;
 end;
 
 
+
 function pasarDatosAcadena(reg: tRegNegocio):string;
+
+// Qué hace: se encarga de pasar todos los datos del registro a cadena y concatena tododos estos para devolver todo una cadena con todos los datos del registro separados por una ","
+// Precondiciones: el registro el cual es recibido por esta funcion debera venir previamente inicializado, o podria devolver informacion erronea
+// Poscondiciones: esta funcion devolvera una cadena asi que debe tener lugar donde guardarla o usarla
+
 
 var
    cad: string;
@@ -870,6 +880,11 @@ begin
 end;
 
 procedure Exportar(nombreDat: string);
+
+//Qué hace: recibe el nombre del archivo dat, o su ruta para conectarse con el archivo.DAT, crea un archivo CSV, lee el archivo.dat y llama a un sub algoritmo que pasa todos los datos del DAT, al CSV hasta que el DAT no tenga mas informacion
+//Precondiciones: necesita el nombre o la ruta del archivo.DAT, y que el archivo dat si exista, si no el procedimiento no funcionara, ademas de que el dat debe ser de tipo tRegNegocio
+//Poscondiciones: nada, ya que crea el CSV y no devuelve nada
+
 var
    DAT: tarchNegocio;
    CSV: text;

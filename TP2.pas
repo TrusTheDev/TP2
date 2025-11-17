@@ -1,6 +1,6 @@
 
 Program BitMarket;
-uses SysUtils;
+uses SysUtils, unix;
 
 const 
  MAX = 500;
@@ -484,8 +484,12 @@ begin
     writeln('Ingresar una seccion para listar:');
     for i := 1 to secDim do
     begin
-        write(secciones[i] + ',');
+        write(secciones[i]);
+        if i <> secDim then 
+            write(',')
     end;
+
+    writeLn;
 
     Readln(seccion);
     
@@ -752,7 +756,7 @@ begin
     begin
         listarAltaSeccion(FilePath,secciones[i],true);
     end;
-    write('Ingresar codigo de articulo formato XXXnnn, para desactivar');
+    writeln('Ingresar codigo de articulo formato XXXnnn, para desactivar');
     readln(codigo);
     BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(FilePath),codigo);
 
@@ -785,7 +789,7 @@ begin
     begin
         listarAltaSeccion(Filepath,secciones[i],false);
     end;
-    write('Ingresar codigo de articulo formato XXXnnn, para activar');
+    writeln('Ingresar codigo de articulo formato XXXnnn, para activar');
     readln(codigo);
     BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
     if Indice <> -1 then
@@ -902,6 +906,7 @@ end;
         Writeln('   6. Listar todos los artículos de una sección');
         Writeln('   7. Exportar a CSV');
         Menu := EnteroEnRango('ingrece alguna opcion:', 0, 7);   
+        fpsystem('clear');
     end;
 
 //******************************************************************//

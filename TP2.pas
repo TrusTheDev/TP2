@@ -34,19 +34,19 @@ ArrRegNegocio = Array [1..MAX] of tRegNegocio;
 
 procedure cadenAfecha(var Fecha: tFecha; aux: String);
 (* Que hace: Recibe una cadena de fecha en formato DD/MM/YYYY y devuelve un tipo tfecha
-  Precondiciones: Fecha = F, aux = A Fecha perteneciente al tipo tFecha y aux con formato: DD/MM/YYYY.
-  Poscondiciones: Fecha = F'
+  Precondiciones: aux = A; aux con formato: DD/MM/YYYY.
+  Poscondiciones: Fecha = F';  Fecha perteneciente al tipo tFecha.
 *)
 var
  i: Integer;
  strNumber: String;
  caracterAux: char;
- slash: Integer;
+ barraInvertida: Integer;
 begin
-  slash := 0;
+  barraInvertida := 0;
   i := 1;  
     
-    while slash <= 2 do
+    while barraInvertida <= 2 do
     begin
         caracterAux := 'A';
         strNumber := '';
@@ -59,30 +59,28 @@ begin
             i := i + 1
         end;
 
-        case slash of
+        case barraInvertida of
           0: Fecha.dia := StrToInt(strNumber);
           1: Fecha.mes := StrToInt(strNumber);
           2: Fecha.anio := StrToInt(strNumber);
         end;
-        slash := slash + 1;  
+        barraInvertida := barraInvertida + 1;  
     end;
 end;
     
 function cadenAlogico(aux: String):boolean;
-//aux = verdadero si la cadena tiene S
 (*  Que hace: verifica si un caracter es 'S'
     precondicones: aux = A
     poscondiciones: cadenAlogico = V o cadenAlogico = F
 *)
 begin
-  cadenAlogico := aux = 'S';
+    cadenAlogico := aux = 'S';
 end;
 
 procedure cadenaAregistro(var Negocio: tRegNegocio; cadReg: String);
-//convierte una linea de una cadena a un tipo registro
 (*  Que hace: convierte una cadena dada separada por , con cada valor a un tRegNegocio.
-    precondicones: Negocio = N, cadReg = C cadReg mantiene el orden 'Seccion,Codigo,Nombre,Stock,Precio,DD/MM/YYYY,DD/MM/YYYY,DD/MM/YYYY,alta'
-    poscondiciones: Negocio = N'
+    precondicones: cadReg = C cadReg mantiene el orden 'Seccion,Codigo,Nombre,Stock,Precio,DD/MM/YYYY,DD/MM/YYYY,DD/MM/YYYY,alta'
+    poscondiciones: Negocio = N perteneciente al tipo tRegNegocio
 *)
 var
   i: Integer;
@@ -117,108 +115,100 @@ begin
 end;
 
 
-function getFileLinesCount(FilePath: String): Integer;
-//Obtiene la cantidad de lineas de un archivo
+function contadorLineasArchivo(FilePath: String): Integer;
 (*  Que hace: cuenta la cantidad de lineas de un archivo.
-    precondicones: FilePath = F y el directorio debe existir.
-    poscondiciones: getFileLinesCount = n
+    precondicones: FilePath = F y el directorio debe existir y tener texto.
+    poscondiciones: contadorLineasArchivo = n
 *)
 var
-  FileText: tArchText;
-  LineCount: Integer;
+  textoArchivo: tArchText;
+  contadorLineas: Integer;
   tempS: String;
 begin
-  Assign(FileText, FilePath);
-  Reset(FileText);
-  LineCount := 0;
-  while not EoF(FileText) do
+  Assign(textoArchivo, FilePath);
+  Reset(textoArchivo);
+  contadorLineas := 0;
+  while not EoF(textoArchivo) do
   begin
-    ReadLn(FileText, tempS);
-    LineCount := LineCount + 1;
+    ReadLn(textoArchivo, tempS);
+    contadorLineas := contadorLineas + 1;
   end;
-  close(FileText);
-  getFileLinesCount := LineCount;
+  close(textoArchivo);
+  contadorLineasArchivo := contadorLineas;
 end;
 
 
-function getFileLinesArchiveCount(FilePath: String): Integer;
-//Obtiene la cantidad de lineas de un archivo
-(*  Que hace: cuenta la cantidad de lineas de un archivo.
-    precondicones: FilePath = F y el directorio debe existir.
-    poscondiciones: getFileLinesCount = n
+function lineasArchivoNegocio(FilePath: String): Integer;
+(*  Que hace: cuenta la cantidad de lineas de un archivo de tRegNegocio.
+    precondicones: FilePath = F y el directorio debe existir y debe ser de tRegNegocio.
+    poscondiciones: contadorLineasArchivo = n
 *)
 var
-  FileText: tArchNegocio;
-  LineCount: Integer;
+  textoArchivo: tArchNegocio;
+  contadorLineas: Integer;
   tempS: tRegNegocio;
 begin
-  Assign(FileText, FilePath);
-  Reset(FileText);
-  LineCount := 0;
-  while not EoF(FileText) do
+  Assign(textoArchivo, FilePath);
+  Reset(textoArchivo);
+  contadorLineas := 0;
+  while not EoF(textoArchivo) do
   begin
-    Read(FileText, tempS);
-    LineCount := LineCount + 1;
+    Read(textoArchivo, tempS);
+    contadorLineas := contadorLineas + 1;
   end;
-  close(FileText);
-  getFileLinesArchiveCount := LineCount;
+  close(textoArchivo);
+  lineasArchivoNegocio := contadorLineas;
 end;
 
-Procedure getFileLine(var tempVar2: String; index: Integer; RelativePath: String);
-//obtiene una linea dada por el bucle for, dios sabe por que esto funciona así.
-(*  Que hace: obtiene una linea dado de un archivo dado
-    precondicones: tempVar2 = T, index = I, RelativePath = R.
-    poscondiciones: tempVar2 = T'
+Procedure lineArchivo(var tempVar2: String; Indice: Integer; RelativePath: String);
+(*  Que hace: obtiene una linea dado de un archivo de texto por el indice.
+    precondicones: Indice = I, RelativePath = R el archivo debe existir y Indice >= 0, el archivo debe ser de texto.
+    poscondiciones: tempVar2 = T
 *)
 Var
-  FileLineHandler: tArchText;
+  archivoLinea: tArchText;
   i: Integer;
 Begin
-  Assign(FileLineHandler, RelativePath);
-  Reset( FileLineHandler );
+  Assign(archivoLinea, RelativePath);
+  Reset( archivoLinea );
   tempVar2 := '';
-  //Esta cosa necesita una explicación: https://stackoverflow.com/questions/64556659/how-to-read-a-specific-line-from-a-text-file-in-pascal
-      For i:= 1 To index Do
-      ReadLn(FileLineHandler, tempVar2);
-  Close(FileLineHandler);
+    For i:= 1 To Indice Do
+        ReadLn(archivoLinea, tempVar2);
+  Close(archivoLinea);
 End;
 
-//Obtiene un archivo dado por una linea
-Procedure getFileBusiness(var tempVar2: tRegNegocio; var Indice: integer; linea: Integer; RelativePath: String);
-(*  Que hace: obtiene una linea dado de un archivo dado
-    precondicones: tempVar2 = T, linea = L, RelativePath = R.
-    poscondiciones: tempVar2 = T'
+Procedure archivoNegocio(var tempVar2: tRegNegocio; var Indice: integer; linea: Integer; RelativePath: String);
+(*  Que hace: obtiene un registro dado de un archivo por su indice y también devuelve su posicion en el archivo.
+    precondicones: linea = L, RelativePath = R.
+    poscondiciones: tempVar2 = T, Indice = I tempVar2 perteneciente al tipo tRegNegocio
 *)
 Var
-  FileLineHandler: tArchNegocio;
+  archivoLinea: tArchNegocio;
   i: Integer;
 Begin
-  Assign(FileLineHandler, RelativePath);
-  Reset(FileLineHandler );
-  //Esta cosa necesita una explicación: https://stackoverflow.com/questions/64556659/how-to-read-a-specific-line-from-a-text-file-in-pascal
+    Assign(archivoLinea, RelativePath);
+    Reset(archivoLinea );
     For i:= 1 To linea Do
-        Read(FileLineHandler, tempVar2);
-  Indice := FilePos(FileLineHandler);
-  Close(FileLineHandler);
+        Read(archivoLinea, tempVar2);
+    Indice := FilePos(archivoLinea);
+    Close(archivoLinea);
 End;
 
-//Faltan agregar restricciones
 procedure CSVaArrRegistro(var Negocios: ArrRegNegocio;var dim: Integer; RelativePath: String);
-//Convierte un CSV a un arreglo de registros.
-(*  Que hace: Convierte un CSV dado con registros de tRegNegocio y los mete a un arreglo del mismo tipo.
-    precondicones: Negocios = N, dim = D, RelativePath = R; [1..D] Perteneciente al rango de ArrRegNegocio y el directorio R existe.
-    poscondiciones: Negocios = N' 
+(*  Que hace: Convierte un CSV a un arreglo de registros.
+    precondicones: dim = D, RelativePath = R; el directorio R debe existir.
+    poscondiciones: Negocios = N; [1..D] Perteneciente al rango de ArrRegNegocio
 *)
 var
-  linesCount, i: Integer;
+  contadorLineas, i: Integer;
   LineRegister: String;
   Negocio: tRegNegocio;
 begin
   
-  linesCount := getFileLinesCount(RelativePath);
-  for i:=1 to linesCount do
+  contadorLineas := contadorLineasArchivo(RelativePath);
+  for i:=1 to contadorLineas do
     begin
-      getFileLine(LineRegister,i,RelativePath);
+      lineArchivo(LineRegister,i,RelativePath);
       dim := dim + 1;
       cadenaAregistro(Negocio,LineRegister);
 
@@ -227,10 +217,7 @@ begin
 end;
 
 function articuloVencido(Negocio: tRegNegocio): boolean;
-//Verifica si un articulo esta vencido utilizando la fecha de adquisición 
-// y la de caducidad
-
-(*  Que hace: verifica si un articulo está vencido utilizando la fecha de adquisición y la fecha de caducidad.
+(*  Que hace: verifica si un articulo está vencido utilizando la fecha actual del sistema y la fecha de caducidad.
     precondicones: Negocio = N del tipo tRegNegocio.
     poscondiciones: articuloVencido = V o articuloVencido = F
 *)
@@ -260,7 +247,6 @@ begin
 end;
 
 function articuloValido(Negocio: tRegNegocio): boolean;  
-//Verifica si un articulo es valido.
 (*  Que hace: Verifica si un articulo es valido por su booleano de alta y la fecha de vencimiento.
     precondicones: Negocio = N 
     poscondiciones: articuloValido = V o articuloValido = F
@@ -273,10 +259,10 @@ begin
 end;
 
 procedure arrToDat(Negocios: ArrRegNegocio; var secciones: ArrSecciones; var secDim: integer; dim: integer; FilePath: String);
-//convierte un arreglo ordenado de negocios a un .dat dado
+
 (*  Que hace: convierte un arreglo dado a un .dat, si el archivo no existe lo crea.
     precondicones: Negocios = N, FilePath = F, dim = D: [1..D] perteneciente al rango de ArrRegNegocio.
-    poscondiciones: Ninguna.
+    poscondiciones: INVENTARIO.DAT de tipo tRegNegocio.
 *)
 var
   datHandler: tArchNegocio;
@@ -313,7 +299,7 @@ begin
 //Ordena por seccion y codigo, parte del quicksort
 (*  Que hace: compara el negocio a y b segun su seccion y codigo si son iguales.
     precondicones: a = A, b = B perteneciente al tipo tRegNegocio.
-    poscondiciones: comparar = 0, comparar = 1, comparar = - 1
+    poscondiciones: comparar = 0 si son iguales, comparar = 1 si a es mas grande que b, comparar = -1 b es mas grande que a
 *)
     if a.seccion = b.seccion then
         begin
@@ -331,7 +317,6 @@ begin
 end;
 
 procedure intercambio(var Negocios: ArrRegNegocio; a, b: integer);
-//intercamba 2 posiciones en un arreglo de negocios dado
 (*  Que hace: intercambia 2 valores de un arreglo.
     precondicones: Negocios = N, a = A, b = B, [A] y [B] dentro del rango valido de ArrRegNegocio
     poscondiciones: Negocios = N'
@@ -346,9 +331,9 @@ end;
 
 procedure particion(var Negocios: ArrRegNegocio; principio,final: integer; var pivote: integer);
 //quicksort
-(*  Que hace:
-    precondicones:
-    poscondiciones:
+(*  Que hace: particiona el arreglo utilizando un pivote, todos los menores van a la izquierda del pivote y los demas a la derecha.
+    precondicones: Negocios = N, principio = Pr, final = F, pivote = P; Negocios perteneciente al tipo ArrRegNegocio
+    poscondiciones: Negocios = N' pivote = P'
 *)
 var
     pared,j: integer;
@@ -369,9 +354,9 @@ end;
 
 procedure quicksort(var Negocios: ArrRegNegocio; principio,final: integer);
 //quicksort
-(*  Que hace:
-    precondicones:
-    poscondiciones:
+(*  Que hace: algortimo recursivo de ordenamiento por seccion y codigo
+    precondicones: Negocios = N, principio = P, final = F; N debe ser del tipo ArrRegNegocio y debe estar desordenado.
+    poscondiciones: Negocios = N'
 *)
 var
     posPivote: integer;
@@ -420,11 +405,9 @@ begin
     altaCadena := 'NO';
 end;
 
-//Este algoritmo deberia ser eliminado para la entrega.
 procedure MostrarNegocio(Negocio: tRegNegocio);
-(* que hace: itera y muestra la seccion y codigo de un arreglo de negocios dado.
-    solamente para testear.
-    precondiciones: Negocios = N, dim = D; [1..D] perteneciente al rango de ArrRegNegocio.
+(* que hace: muestra un tRegNegocio dado
+    precondiciones: Negocio = N
     poscondiciones: ninguna.
 *)
 begin
@@ -441,9 +424,13 @@ begin
     writeln;
   end;
 end;
-//Pregunta en este caso listar el alta y baja es muy ineficiente leerlo del archivo, en este caso se puede usar un arreglo?
-//Also aca tambien se podria implementar 2 archivos temporales de alta y baja para que el algoritmo no itere al pedo.
+
 procedure listarAltaSeccion(FilePath,seccion: string; bandera: boolean);
+(*
+    Que hace: Lista los negocios de INVENTARIO.DAT separado por alta dada la seccion y bandera.
+    Precondiciones: FilePath = F, seccion = S, bandera = B
+    Poscondiciones: Ninguna.
+*)
 var
 FileHandler: tArchNegocio;
 Negocio: tRegNegocio;
@@ -463,9 +450,11 @@ begin
     close(FileHandler);
 end;
 
-
-//Unificar 
 Procedure listarDAT(FilePath: String;secciones: ArrSecciones; secDim: integer);
+(*  Que hace: lista los articulos dados de una seccion separado por el alta.
+    Precondiciones: FilePath = F, secciones = S, secDim = SD; [1..SD] perteneciente al tipo ArrSecciones
+    Poscondiciones: Ninguna.
+*)
 var
     seccion: string;
     i: integer;
@@ -483,33 +472,41 @@ begin
     listarAltaSeccion(FilePath,seccion,false);
 end;
 
-Procedure BuscarCodigoArchivo(var Negocio: tRegNegocio; var Indice: integer; FilePath: String; Ini,fin: Integer; E:String);
-    Var
-        p,f,punt,pos: Integer;
-    begin
-        pos := -1;
-        p := Ini;
-        f := fin;
-        While (pos = -1) and (p <= f) DO
-        Begin
-            punt := (p + f) div 2;
-            getFileBusiness(Negocio,Indice,punt,FilePath);
-            if (Negocio.Codigo = E) then
-                pos :=  punt
+Procedure BuscarCodigoArchivo(var Negocio: tRegNegocio; var Indice: integer; FilePath: String; Ini,fin: Integer; codigo:String);
+(* Que hace: busca el articulo en el archivo dado el codigo como campo clave, devuelve el articulo y la posicion en el archivo
+    Precondiciones: FilePath = File, Ini = I, fin = F codigo = C
+    Poscondiciones: Negocio = N, Indice = I*)
+Var
+p,f,punt,pos: Integer;
+begin
+    pos := -1;
+    p := Ini;
+    f := fin;
+    While (pos = -1) and (p <= f) DO
+    Begin
+        punt := (p + f) div 2;
+        archivoNegocio(Negocio,Indice,punt,FilePath);
+        if (Negocio.Codigo = codigo) then
+           pos :=  punt
+        else
+        begin
+            archivoNegocio(Negocio,Indice,punt,FilePath);
+            if (Negocio.Codigo > codigo) then
+                f := punt-1
             else
-            begin
-            getFileBusiness(Negocio,Indice,punt,FilePath);
-                if (Negocio.Codigo > E) then
-                    f := punt-1
-                else
-                    p := punt+1;
+            p := punt+1;
             end;
         end;
         //El indice se decrementa debido a una complejidad sobre el indice del arreglo.
         Indice := Indice - 1;
     end;
-    // hasta aca, copiar y pegar al anterior
+    
+    //Restricciones
     procedure MostrarArticulo(Filepath: String);
+    (*
+        Que hace: muestra un articulo dado si existe
+        Precondiciones: FilePath = F el archivo debe de existir
+        Poscondiciones: Ninguna*)
     var
         codigo: String; 
         Negocio: tRegNegocio;
@@ -517,7 +514,7 @@ Procedure BuscarCodigoArchivo(var Negocio: tRegNegocio; var Indice: integer; Fil
     begin
         write('Ingresar codigo de articulo formato XXXnnn');
         readln(codigo);
-        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
+        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
         MostrarNegocio(Negocio);
     end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
@@ -702,62 +699,61 @@ procedure DarAltaArticulo(ruta :String; var dim:Integer; max:Integer);
                writeln('ATENCION!!: Limite de almacenamiento alcanzado');
             end;
     end;
-    //Si el algoritmo se ordeno por seccion y codigo, la busqueda tambien puede hacerse por seccion y codigo?
-    //Utilizar de alguna forma entero en rango
- 
-    //Duplicado
     
-
-    procedure EliminarArticulo(FilePath: string; secciones: ArrSecciones; secDim: integer);
-    var
-        FileHandler: tArchNegocio;
-
-        codigo: String; 
-        Negocio: tRegNegocio;
-        i,Indice: integer;
+//Restricciones.
+procedure EliminarArticulo(FilePath: string; secciones: ArrSecciones; secDim: integer);
+(*
+    Que hace: Da de baja logicamente un articulo del INVENTARIO.DAT
+    Precondiciones: FilePath = F secciones = S secDim = SD; [1..SD] perteneciente al tipo ArrSecciones
+    Poscondiciones: INVENTARIO.DAT con el articulo eliminado logicamente
+*)
+var
+    FileHandler: tArchNegocio;
+    codigo: String; 
+    Negocio: tRegNegocio;
+    i,Indice: integer;
+begin
+    for i := 1 to secDim do
     begin
-        for i := 1 to secDim do
-        begin
-            listarAltaSeccion(FilePath,secciones[i],true);
-        end;
-        write('Ingresar codigo de articulo formato XXXnnn, para desactivar');
-        readln(codigo);
-        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,getFileLinesArchiveCount(FilePath),codigo);
-        Negocio.Alta := False;
-
-        Assign(FileHandler, FilePath);
-        Reset(FileHandler);
-        Seek(FileHandler, Indice);
-        write(FileHandler,Negocio);
-        close(FileHandler);
-
+        listarAltaSeccion(FilePath,secciones[i],true);
     end;
+    write('Ingresar codigo de articulo formato XXXnnn, para desactivar');
+    readln(codigo);
+    BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(FilePath),codigo);
+    Negocio.Alta := False;
+    Assign(FileHandler, FilePath);
+    Reset(FileHandler);
+    Seek(FileHandler, Indice);
+    write(FileHandler,Negocio);
+    close(FileHandler);
+end;
 
-    procedure ActivarArticuloDeBaja(FilePath: string; secciones: ArrSecciones; secDim: integer);
-    var
-        FileHandler: tArchNegocio;
-        codigo: String; 
-        Negocio: tRegNegocio;
-        i: integer;
-        Indice: integer;
-    begin
-        for i := 1 to secDim do
-        begin
-            listarAltaSeccion(Filepath,secciones[i],false);
-        end;
-
-        write('Ingresar codigo de articulo formato XXXnnn, para activar');
-        readln(codigo);
-        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,getFileLinesArchiveCount(Filepath),codigo);
-        Negocio.Alta := true;
-
-        Assign(FileHandler, FilePath);
-        Reset(FileHandler);
-        Seek(FileHandler, Indice);
-        write(FileHandler,Negocio);
-        close(FileHandler);
-        
-    end;
+//Restricciones
+procedure ActivarArticuloDeBaja(FilePath: string; secciones: ArrSecciones; secDim: integer);
+(*Que hace: Activa logicamente un articulo dado de baja del INVENTARIO.DAT
+  Precondiciones: FilePath = F, secciones = S secDim = SD
+  Poscondiciones: INVENTARIO.DAT con el acrticulo logicamente activado.*)
+var
+    FileHandler: tArchNegocio;
+    codigo: String; 
+    Negocio: tRegNegocio;
+    i: integer;
+    Indice: integer;
+begin
+for i := 1 to secDim do
+begin
+    listarAltaSeccion(Filepath,secciones[i],false);
+end;
+write('Ingresar codigo de articulo formato XXXnnn, para activar');
+readln(codigo);
+BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
+Negocio.Alta := true;
+Assign(FileHandler, FilePath);
+Reset(FileHandler);
+Seek(FileHandler, Indice);
+write(FileHandler,Negocio);
+close(FileHandler);
+end;
 
 procedure valorMenorADiez(num: integer; var cad: string);
 
@@ -873,7 +869,6 @@ var
 Negocios: ArrRegNegocio;
 secDim,dim,opcion: integer;
 secciones: ArrSecciones;
-i: integer;
 begin
     secDim := 0;
     dim := 0;

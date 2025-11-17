@@ -188,6 +188,7 @@ Var
 Begin
     Assign(archivoLinea, RelativePath);
     Reset(archivoLinea );
+    
     For i:= 1 To linea Do
         Read(archivoLinea, tempVar2);
     Indice := FilePos(archivoLinea);
@@ -446,13 +447,29 @@ begin
         Begin
             Read (FileHandler,Negocio);
             if Negocio.alta = bandera then
-                if Negocio.seccion = seccion then
+                if LowerCase(Negocio.seccion) = LowerCase(seccion) then
                 MostrarNegocio(Negocio)
             else
-                if Negocio.seccion = seccion then
+                if LowerCase(Negocio.seccion) = LowerCase(seccion) then
                 MostrarNegocio(Negocio)
         end;
     close(FileHandler);
+end;
+
+Function seccionExiste(seccion: string; secciones: ArrSecciones; secDim: integer): boolean;
+var
+i: integer;
+bandera: boolean;
+begin
+    i:= 1;
+    bandera :=false;
+    while (i <= secDim) and (bandera <> true) do
+    begin
+    if LowerCase(secciones[i]) = LowerCase(seccion) then
+        bandera := True;
+    i := i + 1;
+    end;
+    seccionExiste := bandera;
 end;
 
 Procedure listarDAT(FilePath: String;secciones: ArrSecciones; secDim: integer);
@@ -464,17 +481,23 @@ var
     seccion: string;
     i: integer;
 begin
-    write('Ingresar una seccion para listar:');
+    writeln('Ingresar una seccion para listar:');
     for i := 1 to secDim do
     begin
         write(secciones[i] + ',');
     end;
 
     Readln(seccion);
-    writeln('Articulos de alta:');
-    listarAltaSeccion(FilePath,seccion,true);
-    writeln('Articulos de baja:');
-    listarAltaSeccion(FilePath,seccion,false);
+    
+    if seccionExiste(seccion, secciones, secDim) then
+        begin
+        writeln('Articulos de alta:');
+        listarAltaSeccion(FilePath,seccion,true);
+        writeln('Articulos de baja:');
+        listarAltaSeccion(FilePath,seccion,false);
+        end
+    else
+        writeln('La seccion no existe;')
 end;
 
 Procedure BuscarCodigoArchivo(var Negocio: tRegNegocio; var Indice: integer; FilePath: String; Ini,fin: Integer; codigo:String);
@@ -503,7 +526,11 @@ begin
             end;
         end;
         //El indice se decrementa debido a una complejidad sobre el indice del arreglo.
-        Indice := Indice - 1;
+
+        if p>f then 
+            Indice := -1
+        else
+        Indice := Indice - 1
     end;
     
     //Restricciones
@@ -517,10 +544,13 @@ begin
         Negocio: tRegNegocio;
         Indice: integer;
     begin
-        write('Ingresar codigo de articulo formato XXXnnn');
+        writeln('Ingresar codigo de articulo formato XXXnnn');
         readln(codigo);
         BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
-        MostrarNegocio(Negocio);
+        if Indice <> -1 then
+            MostrarNegocio(Negocio)
+        else
+        writeln('Articulo no encontrado')
     end;
 //--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
 
@@ -725,12 +755,18 @@ begin
     write('Ingresar codigo de articulo formato XXXnnn, para desactivar');
     readln(codigo);
     BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(FilePath),codigo);
-    Negocio.Alta := False;
-    Assign(FileHandler, FilePath);
-    Reset(FileHandler);
-    Seek(FileHandler, Indice);
-    write(FileHandler,Negocio);
-    close(FileHandler);
+
+    if Indice <> -1 then
+    begin
+        Negocio.Alta := False;
+        Assign(FileHandler, FilePath);
+        Reset(FileHandler);
+        Seek(FileHandler, Indice);
+        write(FileHandler,Negocio);
+        close(FileHandler);
+    end
+    else
+        writeln('El articulo no existe.')
 end;
 
 //Restricciones
@@ -745,19 +781,24 @@ var
     i: integer;
     Indice: integer;
 begin
-for i := 1 to secDim do
-begin
-    listarAltaSeccion(Filepath,secciones[i],false);
-end;
-write('Ingresar codigo de articulo formato XXXnnn, para activar');
-readln(codigo);
-BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
-Negocio.Alta := true;
-Assign(FileHandler, FilePath);
-Reset(FileHandler);
-Seek(FileHandler, Indice);
-write(FileHandler,Negocio);
-close(FileHandler);
+    for i := 1 to secDim do
+    begin
+        listarAltaSeccion(Filepath,secciones[i],false);
+    end;
+    write('Ingresar codigo de articulo formato XXXnnn, para activar');
+    readln(codigo);
+    BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
+    if Indice <> -1 then
+        begin
+        Negocio.Alta := true;
+        Assign(FileHandler, FilePath);
+        Reset(FileHandler);
+        Seek(FileHandler, Indice);
+        write(FileHandler,Negocio);
+        close(FileHandler);
+    end
+    else
+        writeln('El articulo no existe')
 end;
 
 procedure valorMenorADiez(num: integer; var cad: string);

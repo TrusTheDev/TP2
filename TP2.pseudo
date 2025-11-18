@@ -1,43 +1,979 @@
+algoritmo  BitMarket;
+const 
+ MAX = 500;
+Tipos
+tFecha = Registro
+  dia: Entero;
+  mes: Entero;
+  anio: Entero
+fin registro;
+tRegNegocio = Registro
+  Seccion: cadena;
+  Codigo: cadena;
+  Nombre: cadena;
+  Stock: Entero;
+  Precio: real;
+  FechaAdq: tFecha;
+  FechaUv: tFecha;
+  FechaCad: tFecha;
+  alta: logico
+fin registro;
+ArrSecciones = Array [1..MAX] de cadena;
+tArchNegocio = archivo de tRegNegocio;
+tArchText = texto;
+ArrRegNegocio = Array [1..MAX] de tRegNegocio;
 
-//  CSV a .dat
-
-  Procedimiento nombre_procedimiento (E arch:tTexto, S archCSV: tTexto)
-
-Variables
- 
-Inicio
-    crear(archCSV, "NUEVO_INVENTARIO.CSV")
-    ExportarAscv(arch, archCSV)
+procedimiento cadenAfecha(S: Fecha: tFecha; E: aux: cadena);
+/* Que hace: Recibe una cadena de fecha en formato DD/MM/YYYY y devuelve un tipo tfecha
+  Precondiciones: aux = A; aux con formato: DD/MM/YYYY.
+  Poscondiciones: Fecha = F';  Fecha perteneciente al tipo tFecha.
+*/
+var
+ i: Entero;
+ strNumber: cadena;
+ caracterAux: caracter;
+ barraInvertida: Entero;
+inicio
+  barraInvertida <- 0;
+  i <- 1;     
+    mientras barraInvertida <= 2 do
+    inicio
+        caracterAux <- "A";
+        strNumber <- "";
+        mientras (caracterAux <> '/') y (i <= Largo(aux)) hacer
+        inicio
+            caracterAux <- aux[i];
+            si caracterAux <> '/' entonces
+                strNumber <- concatenar(strNumber,caracterAux);
+            i <- i + 1
+        fin mientras;
+        segun barraInvertida hacer
+          0: Fecha.dia <- CadenaAentero(strNumber);
+          1: Fecha.mes <- CadenaAentero(strNumber);
+          2: Fecha.anio <- CadenaAentero(strNumber);
+        fin segun;
+        barraInvertida <- barraInvertida + 1;  
+    fin mientras;
+fin;
     
-Fin Procedimiento
+funcion cadenAlogico(aux: cadena):logico;
+/*  Que hace: verifica si un caracter es 'S'
+    precondicones: aux = A
+    poscondiciones: cadenAlogico = V o cadenAlogico = F
+*/
+inicio
+    cadenAlogico <- aux = "S";
+fin;
 
-Procedimiento ExportarAscv (E nombreArc,nombreCSV:cadena)
+procedimiento cadenaAregistro(S: Negocio: tRegNegocio; E: cadReg: cadena);
+/*  Que hace: convierte una cadena dada separada por, con cada valor a un tRegNegocio.
+    precondicones: cadReg = C cadReg mantiene el orden 'Seccion,Codigo,Nombre,Stock,Precio,DD/MM/YYYY,DD/MM/YYYY,DD/MM/YYYY,alta'
+    poscondiciones: Negocio = N perteneciente al tipo tRegNegocio
+*/
+var
+  i: Entero;
+  aux: cadena;
+  comas: Entero;
+inicio
+  aux <- '';
+  comas <- 0;
+  desde i<-1 hasta Largo(cadReg) hacer
+  
+    si (cadReg[i] = ',') o (i = Largo(cadReg)) hacer
+      inicio
+        comas <- comas + 1;
+        segun comas de
+          1: Negocio.Seccion <- aux;
+          2: Negocio.Codigo <- aux; 
+          3: Negocio.Nombre <- aux;
+          4: Negocio.Stock <- StrToInt(aux);
+          5: Negocio.Precio <- StrToFloat(aux);
+          6: cadenAfecha(Negocio.FechaAdq, aux);
+          7: cadenAfecha(Negocio.FechaUv, aux);
+          8: cadenAfecha(Negocio.FechaCad, aux);
+          9: Negocio.alta <- cadenAlogico(aux);
+        fin segun;
+        aux <- '';
+      
+    sino
+      aux <- aux + cadReg[i];  
+    fin si;
+  fin desde;
+fin;
 
-Variables
-    i:entero
-    archDAT: dathundle
-    reg: record
-    archCSV: tTexto
-    cad:cadena
+funcion contadorLineasArchivo(E: FilePath: cadena): Entero;
+/*  Que hace: cuenta la cantidad de lineas de un archivo.
+    precondicones: FilePath = F y el directorio debe existir y tener texto.
+    poscondiciones: contadorLineasArchivo = n
+*/
+var
+  textoArchivo: tArchText;
+  contadorLineas: Entero;
+  tempS: cadena;
+inicio
+  abrir(textoArchivo, FilePath);
+  contadorLineas <- 0;
+  mientras no esFinArchivo(textoArchivo) hacer
+  inicio
+    leerLn(textoArchivo, tempS);
+    contadorLineas <- contadorLineas + 1;
+  fin mientras;
+  cerrar(textoArchivo);
+  contadorLineasArchivo <- contadorLineas;
+fin;
+
+funcion lineasArchivoNegocio(E: FilePath: cadena): Entero;
+/*  Que hace: cuenta la cantidad de lineas de un archivo de tRegNegocio.
+    precondicones: FilePath = F y el directorio debe existir y debe ser de tRegNegocio.
+    poscondiciones: contadorLineasArchivo = n
+*/
+var
+  textoArchivo: tArchNegocio;
+  contadorLineas: Entero;
+  tempS: tRegNegocio;
+inicio
+  abrir(textoArchivo, FilePath);
+  contadorLineas <- 0;
+  mientras no esFinArchivo(textoArchivo) hacer
+  inicio
+    leer(textoArchivo, tempS);
+    contadorLineas <- contadorLineas + 1;
+  fin mientras;
+  cerrar(textoArchivo);
+  lineasArchivoNegocio <- contadorLineas;
+fin;
+
+Procedimiento lineArchivo(S: tempVar2: cadena; E: Indice: Entero; E: RelativePath: cadena);
+/*  Que hace: obtiene una linea dado de un archivo de texto por el indice.
+    precondicones: Indice = I, RelativePath = R el archivo debe existir y Indice >= 0, el archivo debe ser de texto.
+    poscondiciones: tempVar2 = T
+*/
+Var
+  archivoLinea: tArchText;
+  i: Entero;
+inicio
+  abrir(archivoLinea, RelativePath);
+  tempVar2 <- "";
+    Desde i<- 1 hasta Indice hacer
+        leerLn(archivoLinea, tempVar2);
+    Fin mientras;
+  cerrar(archivoLinea);
+fin;
+
+Procedimiento archivoNegocio(S: tempVar2: tRegNegocio; S: Indice: entero; E: linea: Entero; E: RelativePath: cadena);
+/*  Que hace: obtiene un registro dado de un archivo por su indice y también devuelve su posicion en el archivo.
+    precondicones: linea = L, RelativePath = R.
+    poscondiciones: tempVar2 = T, Indice = I tempVar2 perteneciente al tipo tRegNegocio
+*/
+Var
+  archivoLinea: tArchNegocio;
+  i: Entero;
+inicio
+    abrir(archivoLinea, RelativePath); 
+    Desde i<- 1 hasta linea hacer
+        leer(archivoLinea, tempVar2);
+    fin desde;
+    Indice <- FilePos(archivoLinea);
+    cerrar(archivoLinea);
+fin;
+
+procedimiento CSVaArrRegistro(S: Negocios: ArrRegNegocio; S: dim: Entero; E: RelativePath: cadena);
+/*  Que hace: Convierte un CSV a un arreglo de registros.
+    precondicones: dim = D, RelativePath = R; el directorio R debe existir.
+    poscondiciones: Negocios = N; [1..D] Perteneciente al rango de ArrRegNegocio
+*/
+var
+  contadorLineas, i: Entero;
+  lineaRegistro: cadena;
+  Negocio: tRegNegocio;
+inicio
+  contadorLineas <- contadorLineasArchivo(RelativePath);
+  desde i<-1 hasta contadorLineas hacer
+      lineArchivo(lineaRegistro,i,RelativePath);
+      dim <- dim + 1;
+      cadenaAregistro(Negocio,lineaRegistro);
+      Negocios[i] <- Negocio
+    fin mientras;
+fin;
+
+
+Procedimiento FechaActual (S fecha: tFecha)
+/*
+Qué hace: Brinda la fecha actual
+Prec: - 
+Posc: fecha = F del tipo tFecha
+
+NO DEBEN DESARROLLAR ESTE PROC.  VAMOS A ASUMIR QUE CONTAMOS CON EL
+*/
+
+funcion articuloVencido(E: fechaCad: tFecha): logico;
+/*  Que hace: verifica si un articulo está vencido utilizando la fecha actual del sistema y la fecha de caducidad.
+    precondicones: fechaCAD = F: F es un tFecha 
+    poscondiciones: articuloVencido = V o articuloVencido = F
+*/
+var
+    fecha: tFecha;
+    fechaActual: tFecha;
+    vencido: logico;
+inicio
+    FechAcadena(fechaActual);
+    si (fecha.anio > fechaCad.anio) y (fecha.mes > fechaCad.mes) y (fecha.dia > fechaCad.dia) entonces
+        vencido <- verdadero
+    sino
+        vencido <- Falso;
+    fin si;
+  articuloVencido <- vencido;
+fin;
+
+funcion articuloValido(E: alta: logico; E: fechaCad: tFecha): logico;  
+/*  Que hace: Verifica si un articulo es valido por su booleano de alta y la fecha de vencimiento.
+    precondicones: alta = N, fechaCAD = F: F es un tFecha 
+    poscondiciones: articuloValido = V o articuloValido = F
+*/
+inicio
+  si (alta = Falso)  o (articuloVencido(fechaCad)) entonces
+    articuloValido <- Falso
+  sino
+    articuloValido <- verdadero
+fin;
+
+procedimiento arrToDat(E: Negocios: ArrRegNegocio; E/S: secciones: ArrSecciones; E/S: secDim: entero; E: dim: entero; E: FilePath: cadena);
+
+/*  Que hace: convierte un arreglo dado a un .dat, si el archivo no existe lo crea.
+    precondicones: Negocios = N, FilePath = F, dim = D: [1..D] perteneciente al rango de ArrRegNegocio.
+    poscondiciones: INVENTARIO.DAT de tipo tRegNegocio.
+*/
+var
+  datHandler: tArchNegocio;
+  Negocio: tRegNegocio;
+  i: entero;
+  aux: cadena;
+inicio
+  aux <- '';
+  abrir(datHandler, FilePath);
+  si no findeArdchivo(FilePath) then
+    Escribir(datHandler);
+  fin sino
+  desde i<- 1 hasta dim hacer
+  inicio
+    Negocio <- Negocios[i];
+
+    si articuloValido(Negocio.alta, Negocio.fechaCad) entonces
+    inicio
+    escribir(datHandler, Negocio);
+    fin;
+    si Negocio.seccion <> aux entonces
+      inicio
+        secDim <- secDim + 1;
+        aux <- Negocio.seccion;
+        secciones[secDim] <- aux; 
+      fin;
+    fin; 
+  cerrar(datHandler);
+fin;
+
+funcion comparar(E: aSec,aC: cadena; E: bSec,bC: cadena):entero;
+inicio
+//Ordena por seccion y codigo, parte del quicksort
+/*  Que hace: compara el negocio a y b segun su seccion y codigo si son iguales.
+    precondicones: aSec = aS,aC = AC, bsec = BS, bC= BC.
+    poscondiciones: comparar = 0 si son iguales, comparar = 1 si a es mas grande que b, comparar = -1 b es mas grande que a
+*/
+    si aSec = bSec entonces
+        inicio
+            si aC = bC entonces
+                comparar <- 0
+            si sino aC > bC entonces
+                comparar <- 1
+            sino 
+                comparar <- -1
+        fin si;
+    sino si aSec > bSec entonces
+        comparar <- 1
+    sino
+        comparar <- -1
+    fin si;
+fin;
+
+procedimiento intercambio(E/S Negocios: ArrRegNegocio; E: a, b: entero);
+/*  Que hace: intercambia 2 valores de un arreglo.
+    precondicones: Negocios = N, a = A, b = B, [A] y [B] dentro del rango valido de ArrRegNegocio
+    poscondiciones: Negocios = N'
+*/
+var
+    aux: tRegNegocio;
+inicio
+    aux <- Negocios[a];
+    Negocios[a] <- Negocios[b];
+    Negocios[b] <- aux;
+fin;
+
+procedimiento particion(E/S: Negocios: ArrRegNegocio; E: principio,final: entero; S: pivote: entero);
+//quicksort
+/*  Que hace: particiona el arreglo utilizando un pivote, todos los menores van a la izquierda del pivote y los demas a la derecha.
+    precondicones: Negocios = N, principio = Pr, final = F, pivote = P; Negocios perteneciente al tipo ArrRegNegocio
+    poscondiciones: Negocios = N' pivote = P'
+*/
+var
+    pared,j: entero;
+    SeccionA,CodigoA,SeccionB,CodigoB: cadena;
+inicio
+    pivote <- final;
+    pared <- principio - 1;
+    desde j <- principio hasta final - 1 hacer
+    inicio
+        SeccionA <- Negocios[j].Seccion;
+        CodigoA <- Negocios[j].codigo;
+        SeccionB <- Negocios[pivote].seccion;
+        CodigoB <- Negocios[pivote].codigo;
+        si comparar(SeccionA,CodigoA,SeccionB,CodigoB) < 0 entonces
+            pared <- pared + 1;
+            intercambio(Negocios, pared, j);
+        fin si;
+    fin;
+    pivote <- pared + 1;
+    intercambio(Negocios, pivote, final);
+fin;
+
+procedimiento quicksort(E/S Negocios: ArrRegNegocio; E: principio,final: entero);
+//quicksort
+/*  Que hace: algortimo recursivo de ordenamiento por seccion y codigo
+    precondicones: Negocios = N, principio = P, final = F; N debe ser del tipo ArrRegNegocio y debe estar desordenado.
+    poscondiciones: Negocios = N'
+*/
+var
+    posPivote: entero;
+inicio
+    si principio < final entonces
+        particion(Negocios, principio, final, posPivote);
+        quicksort(Negocios, principio, posPivote - 1);
+        quicksort(Negocios, posPivote+1, final);
+    fin si;
+fin;
+
+procedimiento ordenArrSeCod(E/S Negocios: ArrRegNegocio; E/S dim: entero);
+/*  Que hace: ordena el arreglo de negocios dado por Seccion y codigo.
+    precondicones: Negocios = N, dim = D; [1..D] perteneciente al rango de ArrRegNegocio.
+    poscondiciones: Negocios = N'
+*/
+inicio
+  Quicksort(Negocios,1, dim);
+fin;
+
+procedimiento valorMenorADiez (E valor: entero, S cad:cadena)
+/* Qué hace: recibe un valor numerico y una cadena, si el valor numerico es menor a 10 le concatenara un 0 enfrente de la cadena
+/* Precondiciones: recivira un valor entero el cual debe venir inicializado, ademas de una cadena
+ * Poscondiciones: devolvera la cadena con un 0 o la cadena intacta, tal comoo  esta*/ 
 Inicio
-    i<--0
-    abrir(archDAT,nombreArc)
-    crear(archCSV,nombreCSV)
-    Mientras no(esFinArchivo(archDAT)) hacer
-        i<--i+1
-        leerln(archDAT,reg)
-        cad<--pasarDatosAcadena(reg)
-        EscribirLN(archCSV,cad)
-    Fin mientras
-    cerrar(archCSV)
-    cerrar(archDAT)
+    Si (valor<10) entonces
+        cad<--concatenar(cad,'0')
+    Fin si
 Fin Procedimiento
 
+funcion fechaACadena(E Reg: tFecha): cadena
+/* Qué hace: recive un registro de tipo tFecha para concatenar las fechas en este formato dia/mes/año y devuelve una cadena
+/* Precondiciones: el registro debe venir inicializado, si no podria devolver cualquier tipo de informacion erronea
+ * Poscondiciones: al devolver una cadena debe haber algo que lo reciva o la informacion se perdera*/ 
+Variables
+
+    cad: cadena
+inicio
+    cad<--("")
+    valorMenorADiez(reg.dia,cad)
+    cad<--concatenar(cad,enteroACadena(reg.dia))
+    cad<--concatenar(cad,"/")
+    valorMenorADiez(reg.mes,cad)
+    cad<--concatenar(cad,enteroACadena(reg.mes))
+    cad<--concatenar(cad,"/")
+    valorMenorADiez(reg.anio,cad)
+    cad<--concatenar(cad,enteroACadena(reg.anio))    
+    fechaACadena<--cad
+Fin
+
+Funcion altaCadena(E: alta: logico): cadena;
+/* Qué hace: recive valor logico, si este valor es verdadero devolvera un un SI, de lo contrario si el logico es falso devolvera un NO
+/* Precondiciones: debe ingresar un valor logico
+ * Poscondiciones: devolvera una cadena con SI o con NO*/ 
+inicio
+    si alta entonces
+        altaCadena <- "SI"
+    si sino 
+        altaCadena <- "NO";
+    fin si
+fin;
+
+procedimiento MostrarNegocio(E: Negocio: tRegNegocio);
+/* que hace: muestra un tRegNegocio dado
+    precondiciones: Negocio = N
+    poscondiciones: ninguna.
+*/
+inicio
+  inicio
+    mostrar(Negocio.seccion + ', ');
+    mostrar(Negocio.Codigo + ', ');
+    mostrar(Negocio.Nombre+ ', ');
+    mostrar(IntToStr(Negocio.stock)+ ', ');
+    mostrar((FormatFloat('0.0', Negocio.Precio)) + ', ');
+    mostrar(FechAcadena(Negocio.FechaAdq)+ ', ');
+    mostrar(FechAcadena(Negocio.FechaUv)+ ', ');
+    mostrar(FechAcadena(Negocio.FechaCad)+ ', ');
+    mostrar(altaCadena(Negocio.alta));
+    saltoDeLinea();
+  fin;
+fin;
+
+procedimiento listarAltaSeccion(E: FilePath,seccion: cadena; E: bandera: logico);
+/*
+    Que hace: Lista los negocios de INVENTARIO.DAT separado por alta dada la seccion y bandera.
+    Precondiciones: FilePath = F, seccion = S, bandera = B
+    Poscondiciones: Ninguna.
+*/
+var
+FileHandler: tArchNegocio;
+Negocio: tRegNegocio;
+inicio
+    abrir(FileHandler, FilePath);
+      mientras no findeArchivo(FileHandler) hacer
+            Leer(FileHandler,Negocio);
+            Si Negocio.alta = bandera entonces
+                si LowerCase(Negocio.seccion) = LowerCase(seccion) entonces
+                MostrarNegocio(Negocio)
+            sino
+                si LowerCase(Negocio.seccion) = LowerCase(seccion) entonces
+                MostrarNegocio(Negocio)
+                fin si;
+            fin si;
+        fin mientras;
+    cerrar(FileHandler);
+fin;
+
+Funcion seccionExiste(seccion: cadena; secciones: ArrSecciones; secDim: entero): logico;
+var
+i: entero;
+bandera: logico;
+inicio
+    i<- 1;
+    bandera <-Falso;
+    mientras (i <= secDim) y (bandera <> verdadero) hacer
+    inicio
+    si LowerCase(secciones[i]) = LowerCase(seccion) entonces
+        bandera <- verdadero;
+    i <- i + 1;
+    fin;
+    seccionExiste <- bandera;
+fin;
+
+Procedimiento listarDAT(E FilePath: cadena; E secciones: ArrSecciones;E secDim: entero);
+/*Que hace: 
+    lista los articulos dados de una seccion separado por el alta.
+Precondiciones:
+    FilePath = F, secciones = S, secDim = SD; [1..SD] perteneciente al tipo ArrSecciones
+Poscondiciones: -
+*/
+var
+    seccion: cadena;
+    i: entero;
+inicio
+    Mostrar("Ingresar una seccion para listar:");
+    desde i <- 1 hasta secDim hacer
+        leer(secciones[i]);
+        si i <> secDim entonces 
+            leer(',');
+        fin si
+    fin desde
+    Mostrar;
+    Leer(seccion); 
+     si seccionExiste(seccion, secciones, secDim) then
+        Mostrar('Articulos de alta:');
+        listarAltaSeccion(FilePath,seccion,verdadero);
+        Mostrar('Articulos de baja:');
+        listarAltaSeccion(FilePath,seccion,Falso);
+    sinno
+        Mostrar('La seccion no existe;')
+    fini si
+fin;
+    //***********************************************************************//
+    procedimiento BuscarCodigoArchivo(E/S Negocio: tRegNegocio; E/S Indice: entero; E FilePath: cadena; E Ini,fin_: entero; E E:cadena);
+    /* Qué hace:
+        busca la posición de un elemento en un archivo ordenado
+    Precondición:
+        Negocio = Art ∈ tRegNegocio; indice = pos; FilePath = ruta; ini = principio y fin = fin de la dim del archivo; E = elemento codigo del producto
+    Poscondición:
+        retorna pos = -1, si no se encontro elemento; sino retorna pos = n y negocio = tRegNegocio del archivo
+    */   
+    Var
+        p,f,punt,pos: entero;
+    inicio
+        pos <- -1;
+        p <- Ini;
+        f <- fin_;
+
+        Mientras (pos = -1) and (p <= f) hacer
+            punt <- (p + f) div 2;
+            getFileBusiness(Negocio,Indice,punt,FilePath);
+            si (Negocio.Codigo = E) hacer
+                pos <-  punt;
+            sino
+                getFileBusiness(Negocio,Indice,punt,FilePath);
+                si (Negocio.Codigo > E) hacer
+                    f <- punt-1
+                sino
+                    p <- punt+1;
+                fin si
+            fin si
+        Fin mientras 
+
+        Indice <- Indice - 1;
+    fin.
+
+    //***********************************************************************//
+    procedimiento MostrarArticulo(Filepath: cadena);
+    (*
+        Que hace: muestra un articulo dado si existe
+        Precondiciones: FilePath = F el archivo debe de existir
+        Poscondiciones: Ninguna*)
+    var
+        codigo: cadena; 
+        Negocio: tRegNegocio;
+        Indice: entero;
+    inicio
+        Mostrar('Ingresar codigo de articulo formato XXXnnn');
+        leerLn(codigo);
+        BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
+        si Indice <> -1 entonces
+            MostrarNegocio(Negocio)
+        else
+        Mostrar('Articulo no encontrado')
+    fin;
+
+    //***********************************************************************//
+    funcion confirma (E msj:cadena):logico;
+    /* 
+    Qué hace: 
+        le mustra un mensaje al usuario para que esté lo responda por [S,s,N,n]
+    Precondición: 
+        M=msj ∈ dato estructurado
+    Postcondición: 
+        Preguntar = Verdadero o Falso
+    */
+    var
+       respuesta: caracter;
+    inicio
+        Repetir
+            mostrar(msj);
+            nuevalinea;
+            ingresar(respuesta); 
+            nuevalinea;        
+        Hasta (respuesta en ['s','n','S','N']);
+
+        Si (respuesta en ['n','N']) entonces
+            confirma <- verdadero;         
+        sino
+            confirma <- Falso;                   
+        fin si
+    fin.
+
+    //***********************************************************************//
+    funcion enteroRestriccion(msj: cadena):entero;
+    Var
+    Cod, n: entero;
+    s: cadena;
+    Begin    Repeat
+        Mostrar (msj);
+        leer(s);
+        val(s, n, Cod)
+    until Cod = 0;
+    enteroRestriccion<- n;
+    fi;
+
+    //***********************************************************************// 
+    funcion EnteroEnRango(E msj:cadena; E tope1,tope2: entero):entero;
+    /* Qué hace:
+        Solicita al usuario ingresar un valor entre tope 1 y tope 2
+    Precondición:
+        msj = MENSAJE de cadena; tope1 y tope2 es el rango permitido para el ingreso de un valor
+    Postcondición:
+        Devuelve un valor entero n donde tope1 <= n <= tope2
+    */
+    Var
+        valor: entero;
+    inicio
+        Repetir
+            mostrar(msj);
+            nuevaLinea;
+            ingresar (valor);
+
+            si (valor < tope1) o (valor > tope2) hacer
+                mostrar("ERROR: dimension inválida. se espera que el valor ingresado sea entre", tope1,"y", tope2);
+            fin si
+
+        Hasta (valor en [tope1..tope2])
+        
+        EnteroEnRango <- valor;
+    fin;
+        //***********************************************************************//
+    funcion IngresarNaturalE(E msj:cadena):entero;
+    /* Qué hace:
+        Solicita al usuario ingresar un valor natural entero
+    Precondición:
+        msj = MENSAJE de cadena;
+    Postcondición:
+        Devuelve un valor entero n > 0
+    */
+    var
+        valor:entero;
+    inicio
+        Repetir            
+            mostrar(msj);
+            nuevaLinea;
+            ingresar (valor);
+
+            si valor < 0 hacer
+                mostrar("ERROR: Ingrese un valor natural correcto");
+            fin si
+        hasta (valor >= 0);
+
+        IngresarNaturalE <- valor;
+    fin.
+    //***********************************************************************//
+    funcion IngresarNaturalR(E msj:cadena):Real;
+    /* Qué hace:
+        Solicita al usuario ingresar un valor natural real
+    Precondición:
+        msj = MENSAJE de cadena;
+    Postcondición:
+        Devuelve un valor real n > 0
+    */
+    var
+        valor:Real;
+    inicio
+        Repetir            
+            mostrar(msj);
+            nuevaLinea;
+            ingresar (valor);
+
+            si valor < 0 hacer
+                mostrar("ERROR: Ingrese un valor natural correcto");
+            fin si
+        hasta (valor >= 0)
+
+        IngresarNaturalR <- valor;
+
+    fin.
+    //***********************************************************************//
+    funcion Dia(E mes:entero; E bisiesto: logico):entero;
+    /* Qué hace:
+        valida que el usuario ingrese el valor correcto segun la fecha
+    Precondición:
+        mes ∈ tFecha de entero; bisiesto es un logico de si o no bisiesto
+    Postcondición:
+        Devuelve un valor validado entre el rango de dias disponibles
+    */            
+    inicio
+        si  bisiesto hacer
+            segun (mes) hacer
+                1,3,5,7,8,10,12: Dia <- EnteroEnRango ("Ingrese un día", 1, 31);
+                4,6,9,11: Dia <- EnteroEnRango ("Ingrese un día", 1, 30);
+                2: Dia <- EnteroEnRango ("Ingrese un día", 1, 29);
+            fin segun
+        sino
+            segun (mes) hacer
+                1,3,5,7,8,10,12: Dia <- EnteroEnRango ("Ingrese un día", 1, 31);
+                4,6,9,11: Dia <- EnteroEnRango ("Ingrese un día", 1, 30);
+                2: Dia <- EnteroEnRango ("Ingrese un día", 1, 28);
+            fin segun
+        fin si
+    fin.
+    //***********************************************************************//
+    funcion DiasValido(E a:entero ; E m:entero ):entero;
+    /* Qué hace:
+        verifica si el año es biciesto
+    Precondición:
+        a = año y m = mes  ∈ tFecha de entero;
+    Postcondición:
+        Devuelve un valor ingresado segun la fecha
+    */     
+    inicio
+        si (a mod 4 = 0) o ((a mod 100 = 0) y (a mod 400 = 0)) hacer
+            DiasValido <- Dia(m, verdadero) //biciesto
+        sino
+            DiasValido <- Dia(m, Falso);//no biciesto
+        fin si
+    fin.  
+    //***********************************************************************//
+    procedimiento IngresarFecha(E msj: cadena; E/S fecha: tFecha);
+    /* Qué hace:
+        Valida e ingresa una fecha
+    Precondición:
+        msg=M
+    Poscondición:
+        fecha = F, F es fecha válida
+    */   
+    inicio
+        mostrar(msj);
+        nuevaLinea;
+
+        fecha.anio <- EnteroEnRango("Ingrese un año: ", 1900, 2300);
+        fecha.mes <- EnteroEnRango("Ingrese un mes: ", 1, 12);
+        fecha.dia <- DiasValido(fecha.anio, fecha.mes);  //esta función, en base al año y al mes valida que sea una cantidad de días válido
+    fin.
+    //***********************************************************************// 
+funcion esAlfanumerico(E: cadena_:cadena):logico;
+/*Qué hace:
+    verifica si una cadena es alfanumerica
+Precondición:
+    cadena = C ∈ cadena
+Postcondición:
+    esAlfanumerico = Verdadero si lo es; esAlfanumerico = Falso si no lo es
+*/
+var
+    cont,i,j,max:entero;
+inicio
+    max <- Largo(cadena);
+    cont <- 0;
+    desde i <- 1 hasta 3 hacer
+        si (cadena[i] in ['A'..'Z']) entonces
+            cont <- cont + 1;
+        fin si
+    fin desde
+    desde j <- i hasta max hacer
+        si (cadena[j] en ['0'..'9']) entonces
+            cont <- cont + 1;
+        fin si
+    fin desde;
+    si cont = 6 entonces
+        esAlfanumerico <- verdadero
+    sino
+    
+        Mostrar('ERROR: no se ingreso una cadena alfanumerica en mayuscula.');
+        esAlfanumerico <- Falso;
+    fin si no;
+fin;    
+
+    //***********************************************************************// 
+procedimiento IngresarDatos(E/S NuevoArt:tRegNegocio; E opcion: logico);
+    /* Qué hace:
+        ingresa los datos del articulo
+    Precondición:
+        NuevoArt = Art ∈ tRegNegocio; opcion = V (articulo nuevo) o F (modificar articulo)
+    Poscondición:
+        si V => Art retorna Art'; si F => Art' retorna Art''
+    */   
+    inicio
+        mostrar("-------Intgrese los siguientes datos:");
+        nuevaLinea;
+
+        si opcion hacer
+            mostrar(" * seccion del producto");
+            ingresar(NuevoArt.Seccion);
+            nuevaLinea;
+            mostrar(" * codigo del producto");
+            ingresar(NuevoArt.Codigo); 
+            nuevaLinea;           
+        fin si  
+
+        mostrar(" * nombre del producto");
+        ingresar(NuevoArt.Nombre);
+
+        NuevoArt.Stock <- IngresarNaturalE(" * stock actual del producto");
+        NuevoArt.Precio <- IngresarNaturalR(" * precio del producto");
+
+        IngresarFecha(" * Fecha de adquisición", NuevoArt.FechaAdq);
+        IngresarFecha(" *  Fecha de última venta", NuevoArt.FechaUv);
+        IngresarFecha(" * Fecha de caducidad", NuevoArt.FechaCad);
+
+        si opcion hacer
+            NuevoArt.alta <- confirma("Dar el producto de alta? S/N");
+        fin si
+    fin.
+
+    //***********************************************************************// 
+    procedimiento InsertarOrdenado(E/S arch: tArchNegocio;E NuevoReg: tRegNegocio);
+    /* Qué hace:
+        Agrega el articulo de manera ordenada
+    Precondición:
+        arch = archivo ya abierto y ordenado; NuevoReg ∈ tRegNegocio
+    Poscondición:
+        arch = arch' de manera ordenada
+    */   
+    var
+        pos: entero;
+        articulo: tRegNegocio;
+        lugar:logico;
+    inicio
+        pos <- FileSize(arch)-1;
+        lugar <- Falso;
+        mientras (pos >= 0) y (no lugar) hacer
+            posicionase(arch, pos);
+            leer (arch, articulo);
+
+            si (comparar(NuevoReg,articulo) < 0) entonces
+                escribir(arch, articulo);
+                pos <- pos-1;
+            sino
+                lugar <- verdadero;
+            fin si
+        fin mientras
+        posicionase(arch, pos+1);
+        escribir(arch, NuevoReg);
+    fin.
+
+    //***********************************************************************//  
+procedimiento DarAltaArticulo(E ruta :cadena; E/S dim:entero; E max:entero);
+    /* Qué hace:
+        da de alta un producto
+    Precondición:
+        ruta = Narch; dim = dim de arch
+    Poscondición:
+        dim = dim + 1 si pos = -1
+    */   
+    var
+        pos: entero;
+        NuevoArt: tRegNegocio;
+        negocio: tRegNegocio;
+        archInventario: tArchNegocio; 
+    inicio
+        mostrar("Ingrese el codigo del producto");
+        ingresar(NuevoArt.Codigo);
+        nuevaLinea;
+
+        pos <- -1;
+
+        BuscarCodigoArchivo(negocio, pos, ruta, 1, dim, NuevoArt.Codigo);
+
+        si pos = -1 entonces //si es un articulo nuevo
+            LimpiarPantalla;
+                
+            IngresarDatos(NuevoArt,verdadero);
+
+            abrir(archInventario, ruta);   
+            InsertarOrdenado(archInventario, NuevoArt);
+            cerrar(archInventario);
+
+            dim <- dim+1;
+
+            mostrar("¡Listado con exito! :)");                
+        sino
+            mostrar("ERROR: este produccto ya existe");
+        fin si
+        LimpiarPantalla;
+    fin.
+    
+//Restricciones.
+procedimiento EliminarArticulo(E: FilePath: cadena; E: secciones: ArrSecciones; E: secDim: entero);
+/*
+    Que hace: Da de baja logicamente un articulo del INVENTARIO.DAT
+    Precondiciones: FilePath = F secciones = S secDim = SD; [1..SD] perteneciente al tipo ArrSecciones
+    Poscondiciones: Nada
+*/
+var
+    FileHandler: tArchNegocio;
+    codigo: cadena; 
+    Negocio: tRegNegocio;
+    i,Indice: entero;
+inicio
+    desde i <- 1 hasta secDim hacer
+        listarAltaSeccion(FilePath,secciones[i],verdadero);
+    fin desde;
+    Mostrar('Ingresar codigo de articulo formato XXXnnn, para desactivar');
+    leerLn(codigo);
+    BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(FilePath),codigo);
+
+    si Indice <> -1 entonces
+        Negocio.Alta <- Falso;
+        abrir(FileHandler, FilePath);
+        crear(FileHandler);
+        posicionase(FileHandler, Indice);
+        escribir(FileHandler,Negocio);
+        cerrar(FileHandler);
+    sino
+        Mostrar("El articulo no existe.");
+    fin si;
+fin;
+
+//Restricciones
+procedimiento ActivarArticuloDeBaja(E: FilePath: cadena; E: secciones: E: ArrSecciones; E: secDim: entero);
+/*Que hace: Activa logicamente un articulo dado de baja del INVENTARIO.DAT
+  Precondiciones: FilePath = F, secciones = S secDim = SD
+  Poscondiciones: Nada.*/
+var
+    FileHandler: tArchNegocio;
+    codigo: cadena; 
+    Negocio: tRegNegocio;
+    i: entero;
+    Indice: entero;
+inicio
+    desde i <- 1 hasta secDim hacer
+        listarAltaSeccion(Filepath,secciones[i],Falso);
+    fin desde;
+    Mostrar('Ingresar codigo de articulo formato XXXnnn, para activar');
+    leerLn(codigo);
+    BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
+    si Indice <> -1 entonces
+        Negocio.Alta <- verdadero;
+        abrir(FileHandler, FilePath);
+        posicionase(FileHandler, Indice);
+        escribir(FileHandler,Negocio);
+        cerrar(FileHandler);
+    sino
+        Mostrar("El articulo no existe")
+    fin si
+fin;
+
+Funcion LogicoACadena (E log:Logico):cadena
+/* Qué hace: recive valor logico, si este valor es verdadero devolvera un un SI, de lo contrario si el logico es falso devolvera un NO
+/* Precondiciones: debe ingresar un valor logico
+ * Poscondiciones: devolvera una cadena con SI o con NO*/ 
+Variables
+Inicio
+    Si (log=verdadero) entonces
+        LogicoACadena<--"SI"       
+    sino
+        LogicoACadena<--"NO"
+    fin Si
+Fin Funcion
+
+    //***********************************************************************//  
+    procedimiento ModArticuloDeAlta(E ruta: cadena; E dim: entero);
+    /* Qué hace:
+        permite modificar un articulo
+    Precondición:
+        ruta = Narch; dim = dim de arch
+    Poscondición:
+        arch = arch' si pos <> -1
+    */   
+    var
+        pos: entero;
+        NuevoArt: tRegNegocio;
+        negocio: tRegNegocio;
+        archInventario: tArchNegocio; 
+    inicio
+        mostrar("Ingrese codigo del articulo que desea modificar");
+        ingresar(NuevoArt.Codigo);
+
+        pos <- -1;
+        BuscarCodigoArchivo(negocio, pos, ruta, 1, dim, NuevoArt.Codigo);
+
+        si pos = -1 entonces
+            mostrar("ERROR: Este produccto no se encuentra listado");
+        sino
+            NuevoArt <- negocio;
+            si (no confirma("Estas seguro de querer modificar este articulo?")) entonces
+                IngresarDatos(NuevoArt,Falso);
+                abrir(archInventario, ruta);
+                posicionase(archInventario, pos);
+                escribir (archInventario, NuevoArt);
+                cerrar(archInventario);                
+            fin si           
+        fin si
+        LimpiarPantalla;
+    fin.
+    //***********************************************************************//   
 
 Funcion pasarDatosAcadena (E reg:TregNegocio):cadena
-/* Qué hace:
-/* Precondiciones: 
- * Poscondiciones: */ 
+/* Qué hace: se encarga de pasar todos los datos del registro a cadena y concatena tododos estos para devolver todo una cadena con todos los datos del registro separados por una ","
+/* Precondiciones: el registro el cual es recibido por esta funcion debera venir previamente inicializado, o podria devolver informacion erronea
+ * Poscondiciones: esta funcion devolvera una cadena asi que debe tener lugar donde guardarla o usarla*/ 
 Variables
     cad: cadena
 Inicio
@@ -62,33 +998,87 @@ Inicio
     pasarDatosAcadena <- cad
 Fin Funcion
 
+Procedimiento ExportarAscv (E nombreDAT:cadena)
 
-funcion fechaACadena(E Reg: tFecha): cadena
+/* Qué hace: recibe el nombre del archivo dat, o su ruta para conectarse con el archivo.DAT, crea un archivo CSV, lee el archivo.dat y llama a un sub algoritmo que pasa todos los datos del DAT, al CSV hasta que el DAT no tenga mas informacion
+/* Precondiciones: necesita el nombre o la ruta del archivo.DAT, y que el archivo dat si exista, si no el procedimiento no funcionara, ademas de que el dat debe ser de tipo tRegNegocio
+ * Poscondiciones: nada, ya que crea el CSV y no devuelve nada */ 
 
 Variables
-
-    cad: cadena
-inicio
-    valorMenorADiez(reg.dia,cad)
-    cad<--concatenar(cad,enteroACadena(reg.dia))
-    cad<--concatenar(cad,"/")
-    valorMenorADiez(reg.mes,cad)
-    cad<--concatenar(cad,enteroACadena(reg.mes))
-    cad<--concatenar(cad,"/")
-    valorMenorADiez(reg.anio,cad)
-    cad<--concatenar(cad,enteroACadena(reg.anio))    
-    fechaACadena<--cad
-Fin
-
-Funcion LogicoACadena (E log:Logico):cadena
-/* Qué hace:
-/* Precondiciones: 
- * Poscondiciones: */ 
-Variables
+    archDAT: dathundle
+    reg: tRegNegocio
+    archCSV: tTexto
+    cad:cadena
 Inicio
-    Si (log=verdadero) entonces
-        LogicoACadena<--"SI"       
-    sino
-        LogicoACadena<--"NO"
-    fin Si
-Fin Funcion
+    abrir(archDAT,nombreArc)
+    crear(archCSV,"NUEVO_INVENTARIO.CSV")
+    Mientras no(esFinArchivo(archDAT)) hacer
+        leer(archDAT,reg)
+        cad<--pasarDatosAcadena(reg)
+        EscribirLN(archCSV,cad)
+    Fin mientras
+    cerrar(archCSV)
+    cerrar(archDAT)
+Fin Procedimiento
+
+fin;
+
+    //***********************************************************************//       
+    funcion Menu(E msj: cadena):entero;
+    /* Qué hace:
+        muestra menu del programa
+    Precondición:
+        msj = MENSAJE
+    Poscondición:
+        menu = n ∈ [0..7]
+    */   
+    inicio
+        Mostrar(msj);
+        Mostrar('Menu:');
+        Mostrar('   0. Para salir');
+        Mostrar('   1. Dar de alta un artículo');
+        Mostrar('   2. Modificar un artículo de alta');
+        Mostrar('   3. Eliminar un artículo ');
+        Mostrar('   4. Activar un artículo de baja');  
+        Mostrar('   5. Mostrar un artículo');
+        Mostrar('   6. Listar todos los artículos de una sección');
+        Mostrar('   7. Exportar a CSV');
+        Menu <- EnteroEnRango('ingrece alguna opcion:', 0, 7);   
+    fin.
+
+//******************************************************************//
+//************************ALG_PRINCIPAL*****************************//
+//******************************************************************//
+
+var
+secDim,dim,opcion,i: entero;
+secciones: ArrSecciones;
+
+inicio
+    secDim <- 0;
+    dim <- 0;
+
+    //levanto el csv a un arreglo de registros.
+    CSVaArrRegistro(Negocios,dim,'SUCURSAL_CENTRO.CSV');
+
+    //ordeno el arreglo por seccion y codigo.
+    ordenArrSeCod(Negocios,dim);
+
+    //convierto el arreglo ordenado a .dat
+    arrToDat(Negocios,secciones,secDim, dim,'INVENTARIO.DAT');    
+
+    opcion <- -1;
+    mientras opcion <> 0 hacer
+        opcion <- Menu("-------------“Bit Market”-------------");
+        
+        segun opcion hacer
+            1: DarAltaArticulo('INVENTARIO.DAT', dim);
+            2: ModArticuloDeAlta('INVENTARIO.DAT', dim);
+            3: EliminarArticulo('INVENTARIO.DAT',secciones,secDim);
+            4: ActivarArticuloDeBaja('INVENTARIO.DAT',secciones,secDim);
+            5: MostrarArticulo('INVENTARIO.DAT');
+            6: listarDAT('INVENTARIO.DAT',secciones,secDim);
+            7: Exportar(Negocios);
+        fin segun
+   fin mientras
+fin.

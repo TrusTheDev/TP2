@@ -942,7 +942,49 @@ begin
     fechaACadena:=cad;
 end;
 
-
+    //***********************************************************************//  
+    procedure ModArticuloDeAlta(ruta: string; dim: Integer);
+    (* Qué hace:
+        permite modificar un articulo
+    Precondición:
+        ruta = Narch; dim = dim de arch
+    Poscondición:
+        arch = arch' si pos <> -1
+    *)
+    var
+        pos: Integer;
+        NuevoArt: tRegNegocio;
+        negocio: tRegNegocio;
+        archInventario: tArchNegocio; 
+        aux: string;
+    begin
+        
+        pos := -1;
+        while pos = -1 do
+            begin
+            writeLn('Ingresar codigo del articulo que desea modificar');
+            readln(aux);
+            if esAlfanumerico(aux) then
+            begin
+                BuscarCodigoArchivo(negocio, pos, ruta, 1, dim, aux);
+            if pos = -1 then
+                writeln('el articulo no existe, ingresar otro')
+            end;
+        end;
+            //Aca se podria usar directamente negocio, pero capaz se lee mejor de está forma...
+            NuevoArt := negocio;
+            if (not confirma('Estas seguro de querer modificar este articulo?')) then
+            begin
+                IngresarDatos(NuevoArt,false,ruta,dim);
+                Assign(archInventario, ruta);
+                reset(archInventario);
+                seek(archInventario, pos);
+                Write (archInventario, NuevoArt);
+                close(archInventario);                
+            end;            
+        writeln('Articulo modificado con exito');
+    end;
+    //***********************************************************************//   
 
 function pasarDatosAcadena(reg: tRegNegocio):string;
 
@@ -1056,7 +1098,7 @@ begin
         opcion := Menu();
         case opcion of
             1:DarAltaArticulo('INVENTARIO.DAT', dim,secciones,secDim);
-            //2: ModArticuloDeAlta(Negocios);
+            2: ModArticuloDeAlta('INVENTARIO.DAT',dim);
             3: EliminarArticulo('INVENTARIO.DAT',secciones,secDim);
             4: ActivarArticuloDeBaja('INVENTARIO.DAT',secciones,secDim);
             5: MostrarArticulo('INVENTARIO.DAT');

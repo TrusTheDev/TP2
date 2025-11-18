@@ -75,11 +75,11 @@ var
   aux: cadena;
   comas: Entero;
 inicio
-  aux <- '';
+  aux <- "";
   comas <- 0;
   desde i<-1 hasta Largo(cadReg) hacer
   
-    si (cadReg[i] = ',') o (i = Largo(cadReg)) hacer
+    si (cadReg[i] = ",") o (i = Largo(cadReg)) hacer
       inicio
         comas <- comas + 1;
         segun comas de
@@ -93,7 +93,7 @@ inicio
           8: cadenAfecha(Negocio.FechaCad, aux);
           9: Negocio.alta <- cadenAlogico(aux);
         fin segun;
-        aux <- '';
+        aux <- "";
       
     sino
       aux <- aux + cadReg[i];  
@@ -249,7 +249,7 @@ var
   i: entero;
   aux: cadena;
 inicio
-  aux <- '';
+  aux <- "";
   abrir(datHandler, FilePath);
   si no findeArdchivo(FilePath) then
     Escribir(datHandler);
@@ -366,7 +366,7 @@ procedimiento valorMenorADiez (E valor: entero, S cad:cadena)
  * Poscondiciones: devolvera la cadena con un 0 o la cadena intacta, tal comoo  esta*/ 
 Inicio
     Si (valor<10) entonces
-        cad<--concatenar(cad,'0')
+        cad<--concatenar(cad,"0")
     Fin si
 Fin Procedimiento
 
@@ -409,14 +409,14 @@ procedimiento MostrarNegocio(E: Negocio: tRegNegocio);
 */
 inicio
   inicio
-    mostrar(Negocio.seccion + ', ');
-    mostrar(Negocio.Codigo + ', ');
-    mostrar(Negocio.Nombre+ ', ');
-    mostrar(IntToStr(Negocio.stock)+ ', ');
-    mostrar((FormatFloat('0.0', Negocio.Precio)) + ', ');
-    mostrar(FechAcadena(Negocio.FechaAdq)+ ', ');
-    mostrar(FechAcadena(Negocio.FechaUv)+ ', ');
-    mostrar(FechAcadena(Negocio.FechaCad)+ ', ');
+    mostrar(Negocio.seccion + ", ");
+    mostrar(Negocio.Codigo + ", ");
+    mostrar(Negocio.Nombre+ ", ");
+    mostrar(IntToStr(Negocio.stock)+ ", ");
+    mostrar((FormatFloat("0.0", Negocio.Precio)) + ", ");
+    mostrar(FechAcadena(Negocio.FechaAdq)+ ", ");
+    mostrar(FechAcadena(Negocio.FechaUv)+ ", ");
+    mostrar(FechAcadena(Negocio.FechaCad)+ ", ");
     mostrar(altaCadena(Negocio.alta));
     saltoDeLinea();
   fin;
@@ -478,18 +478,18 @@ inicio
     desde i <- 1 hasta secDim hacer
         leer(secciones[i]);
         si i <> secDim entonces 
-            leer(',');
+            leer(",");
         fin si
     fin desde
     Mostrar;
     Leer(seccion); 
      si seccionExiste(seccion, secciones, secDim) then
-        Mostrar('Articulos de alta:');
+        Mostrar("Articulos de alta:");
         listarAltaSeccion(FilePath,seccion,verdadero);
-        Mostrar('Articulos de baja:');
+        Mostrar("Articulos de baja:");
         listarAltaSeccion(FilePath,seccion,Falso);
     sinno
-        Mostrar('La seccion no existe;')
+        Mostrar("La seccion no existe;")
     fini si
 fin;
     //***********************************************************************//
@@ -537,13 +537,13 @@ fin;
         Negocio: tRegNegocio;
         Indice: entero;
     inicio
-        Mostrar('Ingresar codigo de articulo formato XXXnnn');
+        Mostrar("Ingresar codigo de articulo formato XXXnnn");
         leerLn(codigo);
         BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
         si Indice <> -1 entonces
             MostrarNegocio(Negocio)
         else
-        Mostrar('Articulo no encontrado')
+        Mostrar("Articulo no encontrado")
     fin;
 
     //***********************************************************************//
@@ -564,7 +564,7 @@ fin;
             nuevalinea;
             ingresar(respuesta); 
             nuevalinea;        
-        Hasta (respuesta en ['s','n','S','N']);
+        Hasta (respuesta en [s','n','S','N']);
 
         Si (respuesta en ['n','N']) entonces
             confirma <- verdadero;         
@@ -745,7 +745,7 @@ inicio
         esAlfanumerico <- verdadero
     sino
     
-        Mostrar('ERROR: no se ingreso una cadena alfanumerica en mayuscula.');
+        Mostrar("ERROR: no se ingreso una cadena alfanumerica en mayuscula.");
         esAlfanumerico <- Falso;
     fin si no;
 fin;    
@@ -875,7 +875,7 @@ inicio
     desde i <- 1 hasta secDim hacer
         listarAltaSeccion(FilePath,secciones[i],verdadero);
     fin desde;
-    Mostrar('Ingresar codigo de articulo formato XXXnnn, para desactivar');
+    Mostrar("Ingresar codigo de articulo formato XXXnnn, para desactivar");
     leerLn(codigo);
     BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(FilePath),codigo);
 
@@ -906,7 +906,7 @@ inicio
     desde i <- 1 hasta secDim hacer
         listarAltaSeccion(Filepath,secciones[i],Falso);
     fin desde;
-    Mostrar('Ingresar codigo de articulo formato XXXnnn, para activar');
+    Mostrar("Ingresar codigo de articulo formato XXXnnn, para activar");
     leerLn(codigo);
     BuscarCodigoArchivo(Negocio,Indice, FilePath, 1,lineasArchivoNegocio(Filepath),codigo);
     si Indice <> -1 entonces
@@ -1034,16 +1034,16 @@ fin;
     */   
     inicio
         Mostrar(msj);
-        Mostrar('Menu:');
-        Mostrar('   0. Para salir');
-        Mostrar('   1. Dar de alta un artículo');
-        Mostrar('   2. Modificar un artículo de alta');
-        Mostrar('   3. Eliminar un artículo ');
-        Mostrar('   4. Activar un artículo de baja');  
-        Mostrar('   5. Mostrar un artículo');
-        Mostrar('   6. Listar todos los artículos de una sección');
-        Mostrar('   7. Exportar a CSV');
-        Menu <- EnteroEnRango('ingrece alguna opcion:', 0, 7);   
+        Mostrar("Menu:");
+        Mostrar("   0. Para salir");
+        Mostrar("   1. Dar de alta un artículo");
+        Mostrar("   2. Modificar un artículo de alta");
+        Mostrar("   3. Eliminar un artículo ");
+        Mostrar("   4. Activar un artículo de baja");  
+        Mostrar("   5. Mostrar un artículo");
+        Mostrar("   6. Listar todos los artículos de una sección");
+        Mostrar("   7. Exportar a CSV");
+        Menu <- EnteroEnRango("ingrece alguna opcion:", 0, 7);   
     fin.
 
 //******************************************************************//
@@ -1059,25 +1059,25 @@ inicio
     dim <- 0;
 
     //levanto el csv a un arreglo de registros.
-    CSVaArrRegistro(Negocios,dim,'SUCURSAL_CENTRO.CSV');
+    CSVaArrRegistro(Negocios,dim,"SUCURSAL_CENTRO.CSV");
 
     //ordeno el arreglo por seccion y codigo.
     ordenArrSeCod(Negocios,dim);
 
     //convierto el arreglo ordenado a .dat
-    arrToDat(Negocios,secciones,secDim, dim,'INVENTARIO.DAT');    
+    arrToDat(Negocios,secciones,secDim, dim,"INVENTARIO.DAT");    
 
     opcion <- -1;
     mientras opcion <> 0 hacer
         opcion <- Menu("-------------“Bit Market”-------------");
         
         segun opcion hacer
-            1: DarAltaArticulo('INVENTARIO.DAT', dim);
-            2: ModArticuloDeAlta('INVENTARIO.DAT', dim);
-            3: EliminarArticulo('INVENTARIO.DAT',secciones,secDim);
-            4: ActivarArticuloDeBaja('INVENTARIO.DAT',secciones,secDim);
-            5: MostrarArticulo('INVENTARIO.DAT');
-            6: listarDAT('INVENTARIO.DAT',secciones,secDim);
+            1: DarAltaArticulo("INVENTARIO.DAT", dim);
+            2: ModArticuloDeAlta("INVENTARIO.DAT", dim);
+            3: EliminarArticulo("INVENTARIO.DAT",secciones,secDim);
+            4: ActivarArticuloDeBaja("INVENTARIO.DAT",secciones,secDim);
+            5: MostrarArticulo("INVENTARIO.DAT");
+            6: listarDAT("INVENTARIO.DAT",secciones,secDim);
             7: Exportar(Negocios);
         fin segun
    fin mientras

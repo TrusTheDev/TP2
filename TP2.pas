@@ -586,33 +586,22 @@ begin
             confirma := FALSE;
         end;
     end;
-    //***********************************************************************//
-    function nReal (msj : string):Real;
-    Var
-        Cod, n: integer;
-        s: string;
-    Begin
-        Repeat
-            writeln (msj);
-            readln(s);
-            val(s, n, Cod)
-        until Cod = 0;
-        nReal:= n;
-    End;
+
+function enteroRestriccion(msj: string):integer;
+Var
+  Cod, n: integer;
+  s: string;
+Begin
+Repeat
+    writeln (msj);
+    readln(s);
+    val(s, n, Cod)
+until Cod = 0;
+  enteroRestriccion:= n;
+End;
+
     //***********************************************************************// 
-        function entero (msj : string):Integer;
-    Var
-        Cod, n: integer;
-        s: string;
-    Begin
-        Repeat
-            writeln (msj);
-            readln(s);
-            val(s, n, Cod)
-        until Cod = 0;
-        entero:= n;
-    End;
-    //***********************************************************************// 
+
     function EnteroEnRango(msj: String; tope1,tope2: integer):integer;
     (*Qué hace:
         Solicita al usuario ingresar un valor entre 1 y 5
@@ -625,10 +614,11 @@ begin
         valor: Integer;
     begin
         repeat
-            valor := entero(msj);
+            valor := enteroRestriccion(msj);
             if (valor < tope1) or (valor > tope2) then
                 Write('ERROR: dimension inválida. se espera que el valor ingresado sea entre', tope1,'y', tope2);
-        until (valor in [tope1..tope2]);
+            write('valor: ', valor);
+        until (valor >= tope1) and (valor <= tope2);
         EnteroEnRango := valor;
     end;
         //***********************************************************************//
@@ -636,8 +626,9 @@ begin
     var
         valor:Integer;
     begin
-        Repeat            
-            valor := entero(msj);
+        Repeat
+            write(msj);        
+            readln(valor); 
             if valor < 0 then
                 Write('ERROR: Ingrese un valor natural correcto');
         until (valor >= 0);
@@ -648,8 +639,9 @@ begin
     var
         valor:Real;
     begin
+        write(msj);
         Repeat            
-            valor := nReal(msj);
+            readln(valor);
             if valor < 0 then
                 Write('ERROR: Ingrese un valor natural correcto');
         until (valor >= 0);
@@ -685,63 +677,167 @@ begin
             DiasValido := Dia(m, false);//no biciesto
     end;    
     //***********************************************************************//
-    procedure IngresarFecha(msj: String; Var fecha: tFecha);
-    (* Qué hace: Valida e ingresa una fecha
-    Prec: msg=M
-    Posc:fecha = F, F es fecha válida
+procedure IngresarFecha(msj: String; Var fecha: tFecha);
+    (* Qué hace:
+        Valida e ingresa una fecha
+    Precondición:
+        msg=M
+    Poscondición:
+        fecha = F, F es fecha válida
     *)    
     begin
         writeln(msj);
-        fecha.anio := EnteroEnRango('Ingrese un año: ', 1900, 2300);
+        fecha.anio := EnteroEnRango('Ingrese un año: ',1900,2300);
         fecha.mes := EnteroEnRango('Ingrese un mes: ', 1, 12);
         fecha.dia := DiasValido(fecha.anio, fecha.mes);  //esta función, en base al año y al mes valida que sea una cantidad de días válido
     end;
     //***********************************************************************// 
-    procedure IngresarDatos(var NuevoArt:tRegNegocio);
+function esAlfanumerico(cadena:string):boolean;
+(*Qué hace:
+    verifica si una cadena es alfanumerica
+Precondición:
+    cadena = C ∈ string
+Postcondición:
+    esAlfanumerico = Verdadero si lo es; esAlfanumerico = Falso si no lo es
+*)
+var
+    cont,i,j,max:integer;
+begin
+    max := length(cadena);
+    cont := 0;
+    for i := 1 to 3 do
+    begin
+        if (cadena[i] in ['A'..'Z']) then
+            cont := cont + 1;
+    end;
+    for j := i to max do
+    begin
+        if (cadena[j] in ['0'..'9']) then
+            cont := cont + 1;
+    end;
+    if cont = 6 then
+        esAlfanumerico := TRUE
+    else
+    begin
+        writeLn('ERROR: no se ingreso una cadena alfanumerica en mayuscula.');
+        esAlfanumerico := FALSE;
+    end;
+end;    
+
+    //***********************************************************************// 
+procedure IngresarDatos(var NuevoArt:tRegNegocio; opcion: boolean; ruta: string; dim: integer);
+    (*Qué hace:
+        ingresa los datos del articulo
+    Precondición:
+        NuevoArt = Art ∈ tRegNegocio; opcion = V (articulo nuevo) o F (modificar articulo)
+    Poscondición:
+        si V => Art retorna Art'; si F => Art' retorna Art''
+    *)
+    var
+    aux: string;
+    pos: integer;
+    Negocio: tRegNegocio;
     begin
         writeln('-------Intgrese los siguientes datos:');
-        write(' 1. seccion del producto');
-        readln(NuevoArt.Seccion);
-        write(' 2. codigo del producto');
-        readln(NuevoArt.Codigo);
-        write(' 3. nombre del producto');
+
+        if opcion then
+        begin
+            writeln(' * seccion del producto');
+            readln(NuevoArt.Seccion);
+    
+            writeln(' * codigo del producto');
+            pos := -2;
+
+            while pos <> -1 do
+            begin
+            readln(aux);
+            if esAlfanumerico(aux) then
+            begin
+                BuscarCodigoArchivo(Negocio, pos, ruta, 1, dim, aux);
+            end;     
+        
+            if pos = 0 then
+                writeln('ERROR: este produccto ya existe, re-ingresar');
+            end;
+            NuevoArt.Codigo := aux;    
+        end;
+
+        write(' * nombre del producto');
         readln(NuevoArt.Nombre);
 
-        NuevoArt.Stock := IngresarNaturalE(' 4. stock actual del producto');
-        NuevoArt.Precio := IngresarNaturalR(' 5. precio del producto');
+        NuevoArt.Stock := IngresarNaturalE(' * stock actual del producto');
+        NuevoArt.Precio := IngresarNaturalR(' * precio del producto');
 
-        IngresarFecha(' 6. Fecha de adquisición', NuevoArt.FechaAdq);
-        IngresarFecha(' 7.  Fecha de última venta', NuevoArt.FechaUv);
-        IngresarFecha(' 8. Fecha de caducidad', NuevoArt.FechaCad);
-        NuevoArt.alta := confirma('Dar el producto de alta? S/N');
-        
+        IngresarFecha(' * Fecha de adquisición', NuevoArt.FechaAdq);
+        IngresarFecha(' *  Fecha de última venta', NuevoArt.FechaUv);
+        IngresarFecha(' * Fecha de caducidad', NuevoArt.FechaCad);
+
+        if opcion then
+            NuevoArt.alta := confirma('alta de producto? S/N');
+    end;
+
+    //***********************************************************************// 
+    procedure InsertarOrdenado(var arch: tArchNegocio; NuevoReg: tRegNegocio);
+    (*Qué hace:
+        Agrega el articulo de manera ordenada
+    Precondición:
+        arch = archivo ya abierto y ordenado; NuevoReg ∈ tRegNegocio
+    Poscondición:
+        arch = arch' de manera ordenada
+    *)
+    var
+        pos: Integer;
+        articulo: tRegNegocio;
+        lugar:boolean;
+    begin
+        pos := FileSize(arch)-1;
+        lugar := false;
+        while (pos >= 0) and (not lugar) do
+        begin
+            seek(arch, pos);
+            read (arch, articulo);
+
+            if (comparar(NuevoReg.seccion,NuevoReg.codigo,articulo.seccion,articulo.codigo) < 0) then
+            begin
+                Write (arch, articulo);
+                pos := pos-1;
+            end
+            else
+            begin
+                lugar := TRUE;
+            end;
+        end;
+        seek(arch, pos+1);
+        Write (arch, NuevoReg);
     end;
 
     //***********************************************************************//  
-procedure DarAltaArticulo(ruta :String; var dim:Integer; max:Integer);
+procedure DarAltaArticulo(ruta :String; var dim:Integer; var secciones:  ArrSecciones; var secDim: Integer);
+    (*Qué hace:
+        da de alta un producto
+    Precondición:
+        ruta = Narch; dim = dim de arch
+    Poscondición:
+        dim = dim + 1 si pos = -1
+    *)
     var
-        pos: Integer;
         NuevoArt: tRegNegocio;
-        negocio : tRegNegocio;
+        archInventario: tArchNegocio; 
     begin
-        if dim <= max then
+        IngresarDatos(NuevoArt,True,ruta,dim);
+        Assign(archInventario, ruta);
+        reset(archInventario);    
+        InsertarOrdenado(archInventario, NuevoArt);
+        close(archInventario);
+        dim := dim+1;
+        writeln('¡Listado con exito! :)');  
+
+        if seccionExiste(NuevoArt.seccion,secciones,secDim) = false then
         begin
-            write('Ingrese el codigo del producto');
-            readln(NuevoArt.Codigo);
+            secDim := secDim + 1;
+            secciones[secDim] := NuevoArt.seccion;
+        end;      
 
-            pos := -1;
-            BuscarCodigoArchivo(negocio, pos, ruta, 1, dim, NuevoArt.Codigo);
-
-            if pos = -1 then //si es un articulo nuevo
-                IngresarDatos(NuevoArt)
-                //InsertarOrdenado (Negocio, dim, NuevoArt);
-            else
-                writeln('ERROR: este produccto ya existe');
-        end
-        else
-            begin
-               writeln('ATENCION!!: Limite de almacenamiento alcanzado');
-            end;
     end;
     
 //Restricciones.
@@ -908,9 +1004,18 @@ begin
 end;
 
     //***********************************************************************//       
-    function Menu(msj: String):integer;
+    function Menu():integer;
     begin
-        Writeln(msj);
+        writeln(' _______   __    __            __       __                      __                   __     ');
+        writeln('|       \ |  \  |  \          |  \     /  \                    |  \                 |  \    ');
+        writeln('| $$$$$$$\ \$$ _| $$_         | $$\   /  $$  ______    ______  | $$   __   ______  _| $$_   ');
+        writeln('| $$__/ $$|  \|   $$ \        | $$$\ /  $$$ |      \  /      \ | $$  /  \ /      \|   $$ \  ');
+        writeln('| $$    $$| $$ \$$$$$$        | $$$$\  $$$$  \$$$$$$\|  $$$$$$\| $$_/  $$|  $$$$$$\\$$$$$$  ');
+        writeln('| $$$$$$$\| $$  | $$ __       | $$\$$ $$ $$ /      $$| $$   \$$| $$   $$ | $$    $$ | $$ __ ');
+        writeln('| $$__/ $$| $$  | $$|  \      | $$ \$$$| $$|  $$$$$$$| $$      | $$$$$$\ | $$$$$$$$ | $$|  \');
+        writeln('| $$    $$| $$   \$$  $$      | $$  \$ | $$ \$$    $$| $$      | $$  \$$\ \$$     \  \$$  $$');
+        writeln(' \$$$$$$$  \$$    \$$$$        \$$      \$$  \$$$$$$$ \$$       \$$   \$$  \$$$$$$$   \$$$$  ');
+        
         Writeln('Menu:');
         Writeln('   0. Para salir');
         Writeln('   1. Dar de alta un artículo');
@@ -929,13 +1034,11 @@ end;
 //******************************************************************//
 
 var
-//variables de prueba, borrar al final.
-//Negocio: tRegNegocio;
-//NegocioArchivo: tArchNegocio;
 Negocios: ArrRegNegocio;
 secDim,dim,opcion: integer;
 secciones: ArrSecciones;
 begin
+
     secDim := 0;
     dim := 0;
     //levanto el csv a un arreglo de registros.
@@ -950,10 +1053,9 @@ begin
     opcion := -1;
     while opcion <> 0 do
     begin
-        opcion := Menu('-------------“Bit Market”-------------');
-        //El filepath siempre deberia ser una copia del original para el tema de agregar, eliminar, guardar o deshacer cambios, etc.
+        opcion := Menu();
         case opcion of
-            1:DarAltaArticulo('INVENTARIO.DAT', dim, max);
+            1:DarAltaArticulo('INVENTARIO.DAT', dim,secciones,secDim);
             //2: ModArticuloDeAlta(Negocios);
             3: EliminarArticulo('INVENTARIO.DAT',secciones,secDim);
             4: ActivarArticuloDeBaja('INVENTARIO.DAT',secciones,secDim);

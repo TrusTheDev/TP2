@@ -1,13 +1,15 @@
-
 Program BitMarket;
-uses SysUtils, unix;
+uses SysUtils,crt;
+
 const 
  MAX = 500;
+
 Type
 tFecha = Record
   dia: Integer;
   mes: Integer;
   anio: Integer
+
 end;
 tRegNegocio = Record
   Seccion: String;
@@ -20,9 +22,13 @@ tRegNegocio = Record
   FechaCad: tFecha;
   alta: boolean
 end;
+
 ArrSecciones = Array [1..MAX] of string;
 tArchNegocio = File of tRegNegocio;
 tArchText = Text;
+
+
+
 ArrRegNegocio = Array [1..MAX] of tRegNegocio;
 
 procedure cadenAfecha(var Fecha: tFecha; aux: String);
@@ -37,7 +43,8 @@ var
  barraInvertida: Integer;
 begin
   barraInvertida := 0;
-  i := 1;     
+  i := 1;  
+    
     while barraInvertida <= 2 do
     begin
         caracterAux := 'A';
@@ -47,8 +54,10 @@ begin
             caracterAux := aux[i];
             if caracterAux <> '/' then
                 strNumber := concat(strNumber,caracterAux);
+
             i := i + 1
         end;
+
         case barraInvertida of
           0: Fecha.dia := StrToInt(strNumber);
           1: Fecha.mes := StrToInt(strNumber);
@@ -104,6 +113,7 @@ begin
   end;
 end;
 
+
 function contadorLineasArchivo(FilePath: String): Integer;
 (*  Que hace: cuenta la cantidad de lineas de un archivo.
     precondicones: FilePath = F y el directorio debe existir y tener texto.
@@ -125,6 +135,7 @@ begin
   close(textoArchivo);
   contadorLineasArchivo := contadorLineas;
 end;
+
 
 function lineasArchivoNegocio(FilePath: String): Integer;
 (*  Que hace: cuenta la cantidad de lineas de un archivo de tRegNegocio.
@@ -166,7 +177,7 @@ Begin
 End;
 
 Procedure archivoNegocio(var tempVar2: tRegNegocio; var Indice: integer; linea: Integer; RelativePath: String);
-(*  Que hace: obtiene un registro dado de un archivo por su indice y también devuelve su posicion en el archivo.
+(*  Que hace: obtiene un registro dado de un archivo por su indice y tambi�n devuelve su posicion en el archivo.
     precondicones: linea = L, RelativePath = R.
     poscondiciones: tempVar2 = T, Indice = I tempVar2 perteneciente al tipo tRegNegocio
 *)
@@ -175,7 +186,8 @@ Var
   i: Integer;
 Begin
     Assign(archivoLinea, RelativePath);
-    Reset(archivoLinea ); 
+    Reset(archivoLinea );
+    
     For i:= 1 To linea Do
         Read(archivoLinea, tempVar2);
     Indice := FilePos(archivoLinea);
@@ -205,7 +217,7 @@ begin
 end;
 
 function articuloVencido(fechaCad: tFecha): boolean;
-(*  Que hace: verifica si un articulo está vencido utilizando la fecha actual del sistema y la fecha de caducidad.
+(*  Que hace: verifica si un articulo est� vencido utilizando la fecha actual del sistema y la fecha de caducidad.
     precondicones: fechaCAD = F: F es un tFecha 
     poscondiciones: articuloVencido = V o articuloVencido = F
 *)
@@ -217,16 +229,20 @@ var
 begin
     //Tomo fecha del sistema
     fechaActual := Date;
+
     // Decodifico la fecha en anio, mes y dia, devuelve 3 valores de tipo WORD
     DecodeDate(fechaActual, a, m, d);
+
     //convierto los WORD a integer
     fecha.anio:= Integer(a);
     fecha.mes:= Integer(m);
     fecha.dia:= Integer(d);
+
     if (fecha.anio > fechaCad.anio) AND (fecha.mes > fechaCad.mes) AND (fecha.dia > fechaCad.dia) then
         vencido := true
     else
         vencido := false;
+
   articuloVencido := vencido;
 end;
 
@@ -273,7 +289,8 @@ begin
         aux := Negocio.seccion;
         secciones[secDim] := aux; 
       end;
-  end; 
+  end;
+  
   Close(datHandler);
 end;
 
@@ -367,7 +384,8 @@ begin
 end;
 
 Function valorMenorADiez(num: integer): string;
-// Qué hace: recibe un valor numerico y si el valor numerico es menor a 10 le concatenara un 0 enfrente del numero convertido a cadena o retornara el numero a cadena.
+
+// Qu� hace: recibe un valor numerico y si el valor numerico es menor a 10 le concatenara un 0 enfrente del numero convertido a cadena o retornara el numero a cadena.
 // Precondiciones: recibira un valor entero el cual debe venir inicializado.
 // Poscondiciones: devolvera la cadena con un 0 o la cadena intacta, tal comoo  esta.
 begin
@@ -376,6 +394,7 @@ begin
     else
     valorMenorADiez := IntToStr(num);
 end;
+
 
 Function FechAcadena(Fecha: tFecha): String;
 var
@@ -407,7 +426,7 @@ begin
     Write(Negocio.Codigo + ', ');
     Write(Negocio.Nombre+ ', ');
     Write(IntToStr(Negocio.stock)+ ', ');
-    Write((FormatFloat('0.0', Negocio.Precio)) + ', ');
+    Write(FloatToStrF(Negocio.Precio, ffFixed, 8, 1) + ', ');
     Write(FechAcadena(Negocio.FechaAdq)+ ', ');
     Write(FechAcadena(Negocio.FechaUv)+ ', ');
     Write(FechAcadena(Negocio.FechaCad)+ ', ');
@@ -442,11 +461,6 @@ begin
 end;
 
 Function seccionExiste(seccion: string; secciones: ArrSecciones; secDim: integer): boolean;
-(*
-    Que hace: verifica si la seccion existe dentro del arreglo secciones
-    Precondiciones: seccion = S; secciones: S, secDim: SD; [1..SD] perteneciente al tipo secciones
-    Poscondiciones: seccionExiste = V o seccionExiste = F
-*)
 var
 i: integer;
 bandera: boolean;
@@ -478,8 +492,11 @@ begin
         if i <> secDim then 
             write(',')
     end;
+
     writeLn;
-    Readln(seccion); 
+
+    Readln(seccion);
+    
     if seccionExiste(seccion, secciones, secDim) then
         begin
         writeln('Articulos de alta:');
@@ -517,11 +534,13 @@ begin
             end;
         end;
         //El indice se decrementa debido a una complejidad sobre el indice del arreglo.
+
         if p>f then 
             Indice := -1
         else
         Indice := Indice - 1
-    end;   
+    end;
+    
     //Restricciones
     procedure MostrarArticulo(Filepath: String);
     (*
@@ -541,7 +560,8 @@ begin
         else
         writeln('Articulo no encontrado')
     end;
-    //***********************************************************************//
+//--------------------------------------------------- Inicio del algoritmo ---------------------------------------------------.
+
     function confirma (msj:string):boolean;
     (*
     QUE HACE?:
@@ -566,26 +586,41 @@ begin
         end;
     end;
 
-    function enteroRestriccion(msj: string):integer;
-    Var
-    Cod, n: integer;
-    s: string;
-    Begin
-    Repeat
-        writeln (msj);
-        readln(s);
-        val(s, n, Cod)
-    until Cod = 0;
-    enteroRestriccion:= n;
-    End;
+function realenRestriccion(msj: string):real;
+Var
+  Cod: integer;
+  n: real;
+  s: string;
+Begin
+Repeat
+    writeln (msj);
+    readln(s);
+    val(s, n, Cod)
+until Cod = 0;
+  realenRestriccion:= n;
+End;
+
+function enteroRestriccion(msj: string):integer;
+Var
+  Cod, n: integer;
+  s: string;
+Begin
+Repeat
+    writeln (msj);
+    readln(s);
+    val(s, n, Cod)
+until Cod = 0;
+  enteroRestriccion:= n;
+End;
 
     //***********************************************************************// 
+
     function EnteroEnRango(msj: String; tope1,tope2: integer):integer;
-    (*Qué hace:
+    (*Qu� hace:
         Solicita al usuario ingresar un valor entre 1 y 5
-    Precondición:
+    Precondici�n:
         msj = MENSAJE ? dato estructurado; tope1 y tope2 ? a los parametros ingresados 
-    Postcondición:
+    Postcondici�n:
         Devuelve un valor entero n donde 1 <= n <= 5.
     *)
     Var
@@ -594,7 +629,8 @@ begin
         repeat
             valor := enteroRestriccion(msj);
             if (valor < tope1) or (valor > tope2) then
-                Write('ERROR: dimension inválida. se espera que el valor ingresado sea entre', tope1,'y', tope2);
+                Writeln('ERROR: dimension inv�lida. se espera que el valor ingresado sea entre', tope1,'y', tope2);
+            writeln('valor: ', valor);
         until (valor >= tope1) and (valor <= tope2);
         EnteroEnRango := valor;
     end;
@@ -604,7 +640,7 @@ begin
         valor:Integer;
     begin
         Repeat
-            valor := enteroRestriccion(msj);
+            valor:=enteroRestriccion(msj);
             if valor < 0 then
                 Write('ERROR: Ingrese un valor natural correcto');
         until (valor >= 0);
@@ -616,11 +652,12 @@ begin
         valor:Real;
     begin
         Repeat            
-            valor := enteroRestriccion(msj);
+            valor:=realenRestriccion(msj);
             if valor < 0 then
                 Write('ERROR: Ingrese un valor natural correcto');
         until (valor >= 0);
         IngresarNaturalR := valor; //devuelve un natural real
+
     end;
     //***********************************************************************//
     function Dia(mes:Integer; bisiesto: boolean):Integer;
@@ -628,17 +665,17 @@ begin
         if  bisiesto then
         begin
             case mes of
-                1,3,5,7,8,10,12: Dia := EnteroEnRango ('Ingrese un día', 1, 31);
-                4,6,9,11: Dia := EnteroEnRango ('Ingrese un día', 1, 30);
-                2: Dia := EnteroEnRango ('Ingrese un día', 1, 29);
+                1,3,5,7,8,10,12: Dia := EnteroEnRango ('Ingrese un d�a', 1, 31);
+                4,6,9,11: Dia := EnteroEnRango ('Ingrese un d�a', 1, 30);
+                2: Dia := EnteroEnRango ('Ingrese un d�a', 1, 29);
             end;
         end
         else
         begin
             case mes of
-                1,3,5,7,8,10,12: Dia := EnteroEnRango ('Ingrese un día', 1, 31);
-                4,6,9,11: Dia := EnteroEnRango ('Ingrese un día', 1, 30);
-                2: Dia := EnteroEnRango ('Ingrese un día', 1, 28);
+                1,3,5,7,8,10,12: Dia := EnteroEnRango ('Ingrese un d�a', 1, 31);
+                4,6,9,11: Dia := EnteroEnRango ('Ingrese un d�a', 1, 30);
+                2: Dia := EnteroEnRango ('Ingrese un d�a', 1, 28);
             end;
         end;
     end;
@@ -652,51 +689,45 @@ begin
     end;    
     //***********************************************************************//
 procedure IngresarFecha(msj: String; Var fecha: tFecha);
-    (* Qué hace:
+    (* Qu� hace:
         Valida e ingresa una fecha
-    Precondición:
+    Precondici�n:
         msg=M
-    Poscondición:
-        fecha = F, F es fecha válida
+    Poscondici�n:
+        fecha = F, F es fecha v�lida
     *)    
     begin
         writeln(msj);
-        fecha.anio := EnteroEnRango('Ingrese un año: ',1900,2300);
+        fecha.anio := EnteroEnRango('Ingrese un a�o: ',1900,2300);
         fecha.mes := EnteroEnRango('Ingrese un mes: ', 1, 12);
-        fecha.dia := DiasValido(fecha.anio, fecha.mes);  //esta función, en base al año y al mes valida que sea una cantidad de días válido
+        fecha.dia := DiasValido(fecha.anio, fecha.mes);  //esta funci�n, en base al a�o y al mes valida que sea una cantidad de d�as v�lido
     end;
     //***********************************************************************// 
 function esAlfanumerico(cadena:string):boolean;
-(*Qué hace:
+(*Qu� hace:
     verifica si una cadena es alfanumerica
-Precondición:
-    cadena = C ∈ string
-Postcondición:
+Precondici�n:
+    cadena = C ? string
+Postcondici�n:
     esAlfanumerico = Verdadero si lo es; esAlfanumerico = Falso si no lo es
 *)
 var
-    cont,i,j:integer;
+    cont,i,j,max:integer;
 begin
+    max := length(cadena);
     cont := 0;
-    if Length(cadena) = 6 then
+    for i := 1 to 3 do
     begin
-        for i := 1 to 3 do
-        begin
-            if (cadena[i] in ['A'..'Z']) then
-                cont := cont + 1;
-        end;
-        for j := i to 6 do
-        begin
-            if (cadena[j] in ['0'..'9']) then
-                cont := cont + 1;
-        end;
+        if (cadena[i] in ['A'..'Z']) then
+            cont := cont + 1;
     end;
-    
-
-    if cont = 6 then
+    for j := i to max do
     begin
+        if (cadena[j] in ['0'..'9']) then
+            cont := cont + 1;
+    end;
+    if cont = 6 then
         esAlfanumerico := TRUE
-    end
     else
     begin
         writeLn('ERROR: no se ingreso una cadena alfanumerica en mayuscula.');
@@ -704,50 +735,44 @@ begin
     end;
 end;    
 
-    //***********************************************************************// 
-procedure IngresarDatos(var NuevoArt:tRegNegocio; opcion: boolean; ruta: string; dim: integer);
-    (*Qué hace:
-        ingresa los datos del articulo
-    Precondición:
-        NuevoArt = Art ∈ tRegNegocio; opcion = V (articulo nuevo) o F (modificar articulo)
-    Poscondición:
-        si V => Art retorna Art'; si F => Art' retorna Art''
-    *)
-    var
-    aux: string;
-    pos: integer;
-    Negocio: tRegNegocio;
+    //***********************************************************************//
+
+function verificarSiExiste(ruta: string; comprobar: string): boolean;
+var
+  Negocio: tRegNegocio;
+  arch: tarchNegocio;
+  vof: boolean;
+begin
+  vof := false;  // por defecto no existe
+
+  assign(arch, ruta);
+  reset(arch);
+
+  while not eof(arch) and (vof = false) do
+  begin
+    read(arch, Negocio);
+
+    if Negocio.Seccion = comprobar then
+      vof := true;
+  end;
+
+  close(arch);
+
+  verificarSiExiste := vof;
+end;
+
+
+
+     
+ procedure IngresarDatos(var NuevoArt:tRegNegocio; opcion: boolean);
     begin
         writeln('-------Intgrese los siguientes datos:');
-        aux := '';
+
         if opcion then
         begin
-            
-            writeln(' * seccion del producto');
-            
-            while aux = '' do
-            begin
-            readln(aux);
-            if (aux = '') or (aux = ' ') then
-                writeln('No se permite ingresar una seccion vacia.')
-            end; 
-            NuevoArt.Seccion := aux;            
-
-            writeln(' * codigo del producto');
-            pos := -2;
-
-            while pos <> -1 do
-            begin
-            readln(aux);
-            if esAlfanumerico(aux) then
-            begin
-                BuscarCodigoArchivo(Negocio, pos, ruta, 1, dim, aux);
-            end;     
-        
-            if pos = 0 then
-                writeln('ERROR: este produccto ya existe, re-ingresar');
-            end;
-            NuevoArt.Codigo := aux;    
+            write(' seccion del producto');
+            readln(NuevoArt.Seccion);
+            NuevoArt.alta := confirma('Dar el producto de alta? S/N');
         end;
 
         write(' * nombre del producto');
@@ -755,29 +780,27 @@ procedure IngresarDatos(var NuevoArt:tRegNegocio; opcion: boolean; ruta: string;
 
         NuevoArt.Stock := IngresarNaturalE(' * stock actual del producto');
         NuevoArt.Precio := IngresarNaturalR(' * precio del producto');
-
         Repeat 
-            IngresarFecha(' * Fecha de adquisición', NuevoArt.FechaAdq);
+            IngresarFecha(' * Fecha de adquisici�n', NuevoArt.FechaAdq);
             IngresarFecha(' * Fecha de caducidad', NuevoArt.FechaCad);
 
-            if NuevoArt.FechaAdq.anio > NuevoArt.FechaCad.Anio then
-                writeln('Se ha ingresado una fecha de caducidad superior a la de adquisición')
-
+            if (NuevoArt.FechaAdq.anio > NuevoArt.FechaCad.Anio) then
+               writeln('error, la fecha de caducidad supera a la de adquisicion');
         Until (NuevoArt.FechaAdq.anio < NuevoArt.FechaCad.Anio);
-
-        IngresarFecha(' *  Fecha de última venta', NuevoArt.FechaUv);
-
-        if opcion then
-            NuevoArt.alta := confirma('alta de producto? S/N');
+        repeat
+              IngresarFecha(' *  Fecha de �ltima venta', NuevoArt.FechaUv);
+              if (not(NuevoArt.FechaAdq.anio < NuevoArt.FechaUv.anio)) then
+                 writeln('error, la fecha de adquisicion es mayor a la ultima venta');
+       until ( NuevoArt.FechaUv.anio in [NuevoArt.FechaAdq.anio .. NuevoArt.FechaCad.Anio]);
     end;
 
     //***********************************************************************// 
     procedure InsertarOrdenado(var arch: tArchNegocio; NuevoReg: tRegNegocio);
-    (*Qué hace:
+    (*Qu� hace:
         Agrega el articulo de manera ordenada
-    Precondición:
-        arch = archivo ya abierto y ordenado; NuevoReg ∈ tRegNegocio
-    Poscondición:
+    Precondici�n:
+        arch = archivo ya abierto y ordenado; NuevoReg ? tRegNegocio
+    Poscondici�n:
         arch = arch' de manera ordenada
     *)
     var
@@ -807,32 +830,42 @@ procedure IngresarDatos(var NuevoArt:tRegNegocio; opcion: boolean; ruta: string;
     end;
 
     //***********************************************************************//  
-procedure DarAltaArticulo(ruta :String; var dim:Integer; var secciones:  ArrSecciones; var secDim: Integer);
-    (*Qué hace:
-        da de alta un producto
-    Precondición:
-        ruta = Narch; dim = dim de arch
-    Poscondición:
-        dim = dim + 1 si pos = -1
-    *)
+procedure DarAltaArticulo(ruta :String; var dim:Integer;var secciones:ArrSecciones; var secDim: integer);
     var
+        pos: Integer;
         NuevoArt: tRegNegocio;
+        negocio: tRegNegocio;
         archInventario: tArchNegocio; 
     begin
-        IngresarDatos(NuevoArt,True,ruta,dim);
-        Assign(archInventario, ruta);
-        reset(archInventario);    
-        InsertarOrdenado(archInventario, NuevoArt);
-        close(archInventario);
-        dim := dim+1;
-        writeln('¡Listado con exito! :)');  
+        repeat
+            write(' codigo del producto (3 letras y 3 numeros)');
+            readln(NuevoArt.Codigo);
+        until esAlfanumerico(NuevoArt.Codigo); 
+
+        pos := -1;
+        BuscarCodigoArchivo(negocio, pos, ruta, 1, dim, NuevoArt.Codigo);
+        if pos = -1 then //si es un articulo nuevo
+        begin
+            ClrScr;
+
+            IngresarDatos(NuevoArt,True);
+
+            Assign(archInventario, ruta);
+            reset(archInventario);
+            InsertarOrdenado(archInventario, NuevoArt);
+            close(archInventario);
+            dim := dim+1;
+
+            writeln('�Listado con exito! :)');
+        end
+        else
+            writeln('ERROR: este produccto ya existe');
 
         if seccionExiste(NuevoArt.seccion,secciones,secDim) = false then
         begin
             secDim := secDim + 1;
             secciones[secDim] := NuevoArt.seccion;
-        end;      
-
+        end;
     end;
     
 //Restricciones.
@@ -903,7 +936,7 @@ end;
 
 function concatenarAlta(logico:boolean): string;
 
-// Qué hace: recive valor logico, si este valor es verdadero devolvera un un SI, de lo contrario si el logico es falso devolvera un NO
+// Qu� hace: recive valor logico, si este valor es verdadero devolvera un un SI, de lo contrario si el logico es falso devolvera un NO
 // Precondiciones: debe ingresar un valor logico
 // Poscondiciones: devolvera una cadena con SI o con NO
 
@@ -914,13 +947,19 @@ begin
          concatenarAlta:= 'NO';
 end;
 
+
+
+
 function fechaACadena(reg:tFecha): string;
 
-// Qué hace: recive un registro de tipo tFecha para concatenar las fechas en este formato dia/mes/año y devuelve una cadena
+// Qu� hace: recive un registro de tipo tFecha para concatenar las fechas en este formato dia/mes/a�o y devuelve una cadena
 // Precondiciones: el registro debe venir inicializado, si no podria devolver cualquier tipo de informacion erronea
 // Poscondiciones: al devolver una cadena debe haber algo que lo reciva o la informacion se perdera
+
+
 var
    cad: string;
+
 begin
     cad:='';
     cad:= cad + valorMenorADiez(reg.dia);
@@ -930,13 +969,14 @@ begin
     cad:=cad + intToStr(reg.anio);
     fechaACadena:=cad;
 end;
+
     //***********************************************************************//  
     procedure ModArticuloDeAlta(ruta: string; dim: Integer);
-    (* Qué hace:
+    (* Qu� hace:
         permite modificar un articulo
-    Precondición:
+    Precondici�n:
         ruta = Narch; dim = dim de arch
-    Poscondición:
+    Poscondici�n:
         arch = arch' si pos <> -1
     *)
     var
@@ -945,7 +985,8 @@ end;
         negocio: tRegNegocio;
         archInventario: tArchNegocio; 
         aux: string;
-    begin  
+    begin
+        
         pos := -1;
         while pos = -1 do
             begin
@@ -958,25 +999,30 @@ end;
                 writeln('el articulo no existe, ingresar otro')
             end;
         end;
-            //Aca se podria usar directamente negocio, pero capaz se lee mejor de está forma...
+            //Aca se podria usar directamente negocio, pero capaz se lee mejor de est� forma...
             NuevoArt := negocio;
             if (not confirma('Estas seguro de querer modificar este articulo?')) then
             begin
-                IngresarDatos(NuevoArt,false,ruta,dim);
+                IngresarDatos(NuevoArt,false);
                 Assign(archInventario, ruta);
                 reset(archInventario);
                 seek(archInventario, pos);
                 Write (archInventario, NuevoArt);
-                close(archInventario);                
-            end;            
-        writeln('Articulo modificado con exito');
+                close(archInventario);
+                writeln('Articulo modificado con exito');
+
+            end;
+       clrscr;
     end;
     //***********************************************************************//   
 
 function pasarDatosAcadena(reg: tRegNegocio):string;
-// Qué hace: se encarga de pasar todos los datos del registro a cadena y concatena tododos estos para devolver todo una cadena con todos los datos del registro separados por una ","
+
+// Qu� hace: se encarga de pasar todos los datos del registro a cadena y concatena tododos estos para devolver todo una cadena con todos los datos del registro separados por una ","
 // Precondiciones: el registro el cual es recibido por esta funcion debera venir previamente inicializado, o podria devolver informacion erronea
 // Poscondiciones: esta funcion devolvera una cadena asi que debe tener lugar donde guardarla o usarla
+
+
 var
    cad: string;
 begin
@@ -1002,9 +1048,11 @@ begin
 end;
 
 procedure Exportar(nombreDat: string);
-//Qué hace: recibe el nombre del archivo dat, o su ruta para conectarse con el archivo.DAT, crea un archivo CSV, lee el archivo.dat y llama a un sub algoritmo que pasa todos los datos del DAT, al CSV hasta que el DAT no tenga mas informacion
+
+//Qu� hace: recibe el nombre del archivo dat, o su ruta para conectarse con el archivo.DAT, crea un archivo CSV, lee el archivo.dat y llama a un sub algoritmo que pasa todos los datos del DAT, al CSV hasta que el DAT no tenga mas informacion
 //Precondiciones: necesita el nombre o la ruta del archivo.DAT, y que el archivo dat si exista, si no el procedimiento no funcionara, ademas de que el dat debe ser de tipo tRegNegocio
 //Poscondiciones: nada, ya que crea el CSV y no devuelve nada
+
 var
    DAT: tarchNegocio;
    CSV: text;
@@ -1014,7 +1062,7 @@ begin
 
     assign(DAT,nombreDat);
     reset(DAT);
-    assign(CSV,'NUEVO_INVENTARIO.CSV');
+    assign(CSV,'C:\\Dev-Pas\codigos_programar\NUEVO_INVENTARIO.CSV');
     rewrite(CSV);
     while not Eof(DAT) do
     begin
@@ -1042,51 +1090,53 @@ end;
         
         Writeln('Menu:');
         Writeln('   0. Para salir');
-        Writeln('   1. Dar de alta un artículo');
-        Writeln('   2. Modificar un artículo de alta');
-        Writeln('   3. Eliminar un artículo ');
-        Writeln('   4. Activar un artículo de baja');  
-        Writeln('   5. Mostrar un artículo');
-        Writeln('   6. Listar todos los artículos de una sección');
+        Writeln('   1. Dar de alta un art�culo');
+        Writeln('   2. Modificar un art�culo de alta');
+        Writeln('   3. Eliminar un art�culo ');
+        Writeln('   4. Activar un art�culo de baja');  
+        Writeln('   5. Mostrar un art�culo');
+        Writeln('   6. Listar todos los art�culos de una secci�n');
         Writeln('   7. Exportar a CSV');
         Menu := EnteroEnRango('ingrece alguna opcion:', 0, 7);   
-        fpsystem('clear');
+        ClrScr;
     end;
 
 //******************************************************************//
 //************************ALG_PRINCIPAL*****************************//
 //******************************************************************//
+
 var
 Negocios: ArrRegNegocio;
 secDim,dim,opcion: integer;
 secciones: ArrSecciones;
-
 const
-
-archivoDAT = 'INVENTARIO.DAT';
+    ArchivoDAT = 'INVENTARIO.DAT';
 begin
+
+
     secDim := 0;
     dim := 0;
     //levanto el csv a un arreglo de registros.
-    CSVaArrRegistro(Negocios,dim,'SUCURSAL_CENTRO.CSV');
+    CSVaArrRegistro(Negocios,dim,'C:\Users\Usuario\OneDrive\Documents\AyP\2025\TP2\listadoProductos.CSV');
     //listar(Negocios, dim);
     //ordeno el arreglo por seccion y codigo.
     ordenArrSeCod(Negocios,dim);
     //listar(Negocios, dim);
     //convierto el arreglo ordenado a .dat
-    arrToDat(Negocios,secciones,secDim, dim,archivoDAT);    
+    arrToDat(Negocios,secciones,secDim, dim,ArchivoDAT);    
+
     opcion := -1;
     while opcion <> 0 do
     begin
         opcion := Menu();
         case opcion of
-            1:DarAltaArticulo(archivoDAT, dim,secciones,secDim);
-            2: ModArticuloDeAlta(archivoDAT,dim);
-            3: EliminarArticulo(archivoDAT,secciones,secDim);
-            4: ActivarArticuloDeBaja(archivoDAT,secciones,secDim);
-            5: MostrarArticulo(archivoDAT);
-            6: listarDAT(archivoDAT,secciones,secDim);
-            7: Exportar(archivoDAT);
+            1:DarAltaArticulo(ArchivoDAT, dim,secciones,secDim);
+            2: ModArticuloDeAlta(ArchivoDAT,dim);
+            3: EliminarArticulo(ArchivoDAT,secciones,secDim);
+            4: ActivarArticuloDeBaja(ArchivoDAT,secciones,secDim);
+            5: MostrarArticulo(ArchivoDAT);
+            6: listarDAT(ArchivoDAT,secciones,secDim);
+            7: Exportar(ArchivoDAT);
         end;
     end;
 end.
